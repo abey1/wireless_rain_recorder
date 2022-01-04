@@ -1,1 +1,3 @@
 in sd card SCK stands for SPI ClocK. CLK stands for SPI CLocK. Two different acronyms for the same thing.
+DI is the same MOSI 
+DO is the same as MISO
