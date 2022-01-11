@@ -1,0 +1,183 @@
+window.Clipboard = (function(window, document, navigator) {
+	var textArea,
+		copy;
+
+	function isOS() {
+		return navigator.userAgent.match(/ipad|iphone/i);
+	}
+
+	function createTextArea(text) {
+		textArea = document.createElement('textArea');
+		textArea.value = text;
+		document.body.appendChild(textArea);
+	}
+
+	function selectText() {
+		var range,
+			selection;
+
+		if (isOS()) {
+			range = document.createRange();
+			range.selectNodeContents(textArea);
+			selection = window.getSelection();
+			selection.removeAllRanges();
+			selection.addRange(range);
+			textArea.setSelectionRange(0, 999999);
+		} else {
+			textArea.select();
+		}
+	}
+
+	function copyToClipboard() {
+		document.execCommand('copy');
+		document.body.removeChild(textArea);
+	}
+
+	copy = function(text) {
+		createTextArea(text);
+		selectText();
+		copyToClipboard();
+	};
+
+	return {
+		copy: copy
+	};
+})(window, document, navigator);
+
+var copy_clicked = false;
+
+function copy(code_id)
+{
+	var text = document.getElementById("code_" + code_id).innerText;
+	Clipboard.copy(text);
+
+	copy_clicked = true;
+
+	$('#code_copy_toast_' + code_id).html('Copied to clipboard');
+	$('#code_copy_toast_' + code_id).addClass('show');
+
+	setTimeout(function(){
+		$('#code_copy_toast_' + code_id).removeClass('show');
+		copy_clicked = false;
+	}, 3000);
+}
+
+function onMouseOverCopy(code_id)
+{
+	if(copy_clicked)
+		return;
+
+	$('#code_copy_toast_' + code_id).html('Click to copy');
+	$('#code_copy_toast_' + code_id).addClass('show');
+}
+
+function onMouseOutCopy(code_id)
+{
+	if(copy_clicked)
+		return;
+
+	$('#code_copy_toast_' + code_id).removeClass('show');
+}
+
+var lastHash = "";
+
+$(document).ready(function () {
+	$(window).scroll(function () {
+		var scrollTop = $(window).scrollTop();
+
+		if (scrollTop >= 100) {
+			$('#header').addClass('header-scrolled');
+			$('#nav_vertical').addClass('nav-y-scrolled');
+			//$('#bookmark_container').addClass('nav-y-scrolled');
+			$('body').addClass('body-scrolled');
+		} else if (scrollTop < 80) {
+			$('#header').removeClass('header-scrolled');
+			$('#nav_vertical').removeClass('nav-y-scrolled');
+			//$('#bookmark_container').removeClass('nav-y-scrolled');
+			$('body').removeClass('body-scrolled');
+		}
+
+		if($('.bookmark').length > 0)
+		{
+			var firstId = $('.bookmark' ).first().attr("href");
+
+			if(($(firstId ).position().top - 55) > scrollTop) {
+				$('.bookmark' ).first().addClass('bookmark-active');
+			} else {
+				$('.bookmark' ).each(function(index) {
+					var refId = $(this).attr("href");
+
+					var refTop = $(refId).position().top;
+					var refBottom = refTop + $(refId).outerHeight();
+					if((refTop - 150) <= scrollTop && (refBottom - 150) > scrollTop) {
+						$(this).addClass('bookmark-active');
+						lastHash = $(this).attr("href");
+						isFound = true;
+					} else {
+						$(this).removeClass('bookmark-active');
+					}
+				});
+			}
+		}
+	});
+
+	$('.bookmark').on("click", function(e) {
+		if(lastHash == $(this).attr("href"))
+			e.preventDefault();
+		else
+		{
+			$('.bookmark' ).each(function(index) {
+				$(this).removeClass('bookmark-active');
+			});
+		}
+	});
+
+	if(window.location.hash) {
+		setTimeout(function(){$(window).trigger('hashchange');}, 500);
+	} else {
+		if($('.bookmark').length > 0)
+		{
+			$('.bookmark' ).first().addClass('bookmark-active');
+		}
+	}
+
+	$(window).on( 'hashchange', function( e ) {
+		if(window.location.hash !== "") {
+			var offset = $(':target').offset();
+			var scrollto = offset.top - 90; // minus fixed header height
+			$('html, body').animate({scrollTop:scrollto}, 0);
+
+			lastHash = window.location.hash;
+		}
+	});
+
+	$('#burger_nav_y').click(function(){
+		$('#burger_nav_x').removeClass('open');
+		$('#nav_x').removeClass('open');
+		$('#burger_nav_y').toggleClass('open');
+		$('#nav_y').toggleClass('open');
+	});
+
+	$('#burger_nav_x').on('click', function () {
+		$('#burger_nav_y').removeClass('open');
+		$('#nav_y').removeClass('open');
+		$('#burger_nav_x').toggleClass('open');
+		$('#nav_x').toggleClass('open');
+	});
+
+
+	$('.image-zoomable' ).each(function() {
+		$(this).on("click", function(){
+			$('#modal_image').attr('src', $(this).attr('src'));
+			$('#modal_container').show();
+		});
+	});
+
+	$('#modal_close').on("click", function(){
+		$('#modal_container').hide();
+	});
+
+	$('#modal_container').on("click", function(){
+		$('#modal_container').hide();
+	});
+});

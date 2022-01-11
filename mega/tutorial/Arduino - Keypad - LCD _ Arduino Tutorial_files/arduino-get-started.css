@@ -1,0 +1,1158 @@
+:root{
+	--base-padding: 20px;
+	--nav-x-height-big: 120px;
+	--nav-x-height-small: 50px;
+	--nav-x-padding-top: 5px;
+	--shortcut-height: 30px;
+	--base-color: #232F3E;
+	--background-color: #E1EFEF;
+	--arduino-color-1: #00979D;
+	--arduino-color-2: #62AEB2;
+	--arduino-color-3: #E67E22;
+	--arduino-color-4: #E5AD24;
+	--arduino-color-5: #8C7965;
+	--copper-color: #CB6D51;
+}
+html{scroll-behavior: smooth;}
+html, body{height: 100%; padding:0; margin:0; }
+body{
+	padding-top: calc(var(--nav-x-height-big) + var(--shortcut-height));
+	/*font: 1.3rem Helvetica,Arial,Verdana,sans-serif;*/
+	font-family: "Poppins", Arial, sans-serif;
+	line-height: 1.7;
+	color: #333333;
+	background-color: var(--background-color);
+	transition: padding-top .5s;
+	-webkit-transition: padding-top .5s; /* Safari */
+}
+p, div{text-align: justify;}
+p{
+	padding:1.5em 0px 2px 0px;
+	margin:0px 0px 0px 0px;
+}
+
+div{
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
+.code, .code-container {
+  -webkit-touch-callout: auto !important; /* iOS Safari */
+    -webkit-user-select: auto !important; /* Safari */
+     -khtml-user-select: auto !important; /* Konqueror HTML */
+       -moz-user-select: auto !important; /* Firefox */
+        -ms-user-select: auto !important; /* Internet Explorer/Edge */
+            user-select: text !important; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
+
+a{text-decoration: none; text-align: left !important;}
+ul{list-style-type: none;}
+ul, li{margin: 0px; padding: 0px;}
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
+.table-default{
+	border-collapse: collapse;
+	width: 100%;
+}
+.table-default tr{margin: 0px; padding: 0px;}
+.table-default th{
+	border-bottom: 2px solid var(--arduino-color-3);
+	
+	text-align: left;
+}
+.table-default td{
+	border-top: 1px solid var(--background-color);
+	border-bottom: 1px solid var(--background-color);
+	text-align: left;
+}
+
+.body-scrolled{padding-top: var(--nav-x-height-small);}
+
+.header-container{
+	position: fixed;
+	top: 0;
+	width: 100%;
+	z-index: 20;
+}
+
+.header{
+	width: 100%;
+	height: var(--nav-x-height-big);
+	line-height: var(--nav-x-height-big);
+	z-index: 10;
+	position: relative;
+	text-align: center;
+	color: white;
+	background-color: var(--base-color);
+	-webkit-box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+	   -moz-box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+	        box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+	transition: all .5s;
+	-webkit-transition: all .5s; /* Safari */
+}
+
+.header-scrolled{
+	height: var(--nav-x-height-small) !important;
+	line-height: var(--nav-x-height-small) !important;
+}
+
+.nav-x{
+	width: 60%;
+	max-width: 700px; /* max-width: 650px; */
+	float: right;
+	display: inline-block;
+}
+
+.page-logo{
+	height: calc(100% - 2 * var(--nav-x-padding-top));
+	padding: var(--nav-x-padding-top) 0px var(--nav-x-padding-top) var(--base-padding) ;
+	float: left;
+	display: inline-block;
+	background-color: var(--base-color);
+}
+.page-logo img{height: 100%; width: auto;}
+
+
+.shortcut-link-wrapper{
+	width: calc(100% - var(--base-padding));
+	height: var(--shortcut-height);
+	padding: 0px 0px 0px var(--base-padding);
+	background-color: #000000;
+}
+.shortcut-link-wrapper > div{
+	height: var(--shortcut-height);
+	line-height: var(--shortcut-height);
+	display: inline-block;
+	color: white;
+	background-color: #000000;
+}
+
+.shortcut-link{float: left;}
+.shortcut-language{
+	float: right;
+	overflow-x: auto;
+	white-space: nowrap;
+	font-size: 1.125rem;
+}
+
+.arrow-wrapper {display: inline-block; padding: 0 4px 0 4px}
+.arrow-right {
+	width: 8px;
+	height: 8px;
+	border: solid white;
+	border-width: 0 2px 2px 0;
+	border-radius: 0 0 2px 0;
+	display: inline-block;
+	color: white;
+	transform: rotate(-45deg);
+	-webkit-transform: rotate(-45deg);
+}
+
+.shortcut-link-wrapper {font-size: 1.125rem;}
+.shortcut-link-wrapper a{color: #44B9D6}
+.shortcut-link-wrapper a:hover{text-decoration: underline;} /* mouse over link */
+
+
+.shortcut-language ul{
+	padding: 0;
+	margin: 0;
+	list-style-type: none;
+	display: flex; justify-content: space-between;
+}
+.shortcut-language li{ 
+	padding: 0 5px;
+	margin: 0;
+	display: inline; 
+}
+.shortcut-language .active{color: var(--arduino-color-3) !important;} /* selected link */
+
+.section{width: 100%;  display: flex;}
+.section-tutorial-list{width: 100%}
+
+.nav-y-wrapper{
+
+}
+.nav-y{
+	position: fixed;
+	z-index: 20;
+	top: calc(var(--nav-x-height-big) + var(--shortcut-height));
+	left: 0;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	display: block;
+	transition: top .5s;
+	-webkit-transition: top .5s; /* Safari */
+}
+.nav-y-scrolled{top: calc(var(--nav-x-height-small) + var(--shortcut-height)) !important;}
+.nav-y-header{
+	padding: 10px 0px 3px 0px;
+	border-bottom: 2px solid var(--base-color);
+	margin: 10px var(--base-padding) 0px var(--base-padding);
+	font-weight: bold;
+}
+.nav-y-link{padding:5px 0px 20px 0px;}
+.nav-y-link ul{
+	padding: 8px 0px;
+	margin: 0;
+	list-style-type: none;
+}
+.nav-y-link a{width: calc(100% - 2*var(--base-padding)); padding: 2px var(--base-padding); display:block;}
+
+.main-body{
+	min-height: 100%;
+	padding: 1px var(--base-padding) 0px var(--base-padding);
+	display: inline-block;
+	background: white;
+}
+.main-body div{}
+.main-body img{
+	width: 100%;
+	max-width:700px;
+	/*box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 2px 5px 0 rgba(0, 0, 0, 0.19);*/
+}
+
+.title-container{
+
+}
+.title{
+	margin: 0px 0px 5px 0px;
+	color: var(--arduino-color-1);
+}
+
+.addthis_inline_share_toolbox{padding: 0px 0px 20px 0px ;}
+.addthis_inline_follow_toolbox p{padding: 0px;}
+
+.next-previous{padding: 20px 0px 0px 0px; margin-bottom: 80px; overflow: hidden}
+.next, .previous{
+	width: 140px;
+	height: 40px;
+	line-height: 40px;
+	display: inline-block;
+	text-align: center;
+	vertical-align: top;
+	color: white;
+	background-color: var(--arduino-color-1);
+}
+.previous{float: left;}
+.next{float: right;}
+
+.hardware-table{
+	border-collapse: collapse;
+	width: 100%;
+}
+.hardware-table th, .hardware-table td{
+	padding: 5px 0px;
+	border-top: 1px solid #FFD1B3;
+	border-bottom: 1px solid #FFD1B3;
+	text-align: left;
+}
+.td4{ text-align:right;}
+.td-shopping-cart{ width:40px; padding: 0px 10px; white-space:nowrap;}
+
+.pin-name{
+	padding: 4px 10px !important;
+	border-radius: 9999px;
+	color: white !important;
+}
+.pin-name.vcc{ background-color: #D70003}
+.pin-name.gnd{ background-color: #000000}
+.pin-name.normal-1{ background-color: #FFC000}
+.pin-name.normal-2{ background-color: #27CB37}
+.pin-name.normal-3{ background-color: #FF007F}
+.pin-name.normal-4{ background-color: #BF9000}
+.pin-name.normal-5{ background-color: #8B008B}
+.pin-name.normal-6{ background-color: #764AAC}
+.pin-name.normal-7{ background-color: #10AD99}
+.pin-name.normal-8{ background-color: #DC143C}
+
+.word-common {font-weight: bold; color: var(--arduino-color-4);}
+.word-VCC{font-weight: bold; color: #D70003;}
+.word-GND{font-weight: bold; color: #000000;}
+.quote {
+	font-style: italic;
+	font-weight: bold;
+	color: #FF8040;
+}
+
+.highlight-text-1, .parameter{
+	font-weight: bold;
+	color: var(--arduino-color-5);
+}
+.highlight-text-2{
+	font-family: "Courier New", Courier, monospace;
+	color: #E5AD24;
+}
+
+.text-1 {font-weight: bold; color: #00C9CC;}
+.text-2 {font-weight: bold; color: #F7788A;}
+.text-3 {font-weight: bold; color: #9f224e;}
+.text-4 {font-weight: bold; color: #BF9000;}
+.text-5 {font-weight: bold; color: #D70003;}
+.text-6 {font-weight: bold; color: #34A853;}
+
+.right-side-bar{
+	width: calc(20% - 10px - 5px);
+	margin-left: 15px;
+	display: inline-block;
+	vertical-align:top;
+}
+
+.bookmark-container{
+	position: sticky;
+	top: calc(var(--nav-x-height-small) + var(--shortcut-height));
+	right: 10px;
+	margin: 10px 0px 10px 0px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	display: block;
+	transition: top .5s;
+	-webkit-transition: top .5s; /* Safari */
+}
+
+.bookmark-header{
+	padding-top: 5px;
+	border-bottom: 2px solid var(--base-color);
+	font-weight: bold;
+	background-color: white;
+}
+
+.bookmark-header p{padding: 3px 0px 3px 10px;}
+
+.bookmark-link-wrapper{
+	width: calc(100% - 20px);
+	padding: 10px 10px;
+	margin-bottom: 20px;
+	background-color: white;
+}
+
+.bookmark-link-wrapper a{
+	width: calc(100% - calc(var(--base-padding) * 2));
+	padding: 3px calc(var(--base-padding) / 2);
+	border-left: 3px solid #FFFFFF00;
+	display:block;
+	text-decoration: none;
+}
+
+.footer{
+	width: 100%;
+	padding: 10px 0px;
+	margin: 25px 0px 0px 0px;
+	color: white;
+	background-color: var(--base-color);
+}
+
+.copyright{
+	text-align: center;
+	color: var(--arduino-color-3);
+}
+
+.disclosure{
+	padding: 20px 10px 0px 10px;
+	border-bottom: 2px solid white;
+	text-align: center;
+}
+
+.disclosure-content{
+	padding: 10px 10px 25px 10px;
+	text-align: center;
+}
+
+.affiliate-note{
+	padding: 10px 0px 0px 0px;
+	font-style: italic;
+	text-align: center;
+}
+
+.image-source{
+	width: 100%;
+	max-width:700px;
+	padding: 0px 0px 2px 0px;
+	font-style: italic;
+	text-align: center;
+	color: blue;
+}
+
+.footer-fixed{
+	position: fixed;
+	bottom: 0;
+	width: 100%;
+	z-index: 40;
+	text-align: center;
+	color: white;
+	background-color: var(--base-color);
+	-webkit-box-shadow: 0 -3px 6px rgba(0,0,0,0.16), 0 -3px 6px rgba(0,0,0,0.23);
+	   -moz-box-shadow: 0 -3px 6px rgba(0,0,0,0.16), 0 -3px 6px rgba(0,0,0,0.23);
+	        box-shadow: 0 -3px 6px rgba(0,0,0,0.16), 0 -3px 6px rgba(0,0,0,0.23);
+}
+
+.margin-header-1{margin: 60px 0px 0px 0px;}
+.margin-header-2{margin: 35px 0px 0px 0px;}
+.margin-header-3{margin: 30px 0px 0px 0px;}
+.margin-header-4{}
+.margin-question{margin: 10px 0px 0px 0px;}
+.margin-list-unordered-1, .margin-list-ordered-1{margin: 0px 0px 0px 0px; padding: 0px 0px 2px 2px;}
+.margin-list-unordered-2, .margin-list-ordered-2{margin: 0px 0px 0px 2em; padding: 0px 0px 2px 2px;}
+.margin-list-unordered-3, .margin-list-ordered-3{margin: 0px 0px 0px 4em; padding: 0px 0px 2px 2px;}
+.margin-image{margin: 10px 0px 10px 00px;}
+.margin-link{}
+.margin-blockquote{}
+.margin-code{}
+.margin-note{margin: 1.3em 0px 0px 0px; padding: 1px 20px; }
+.margin-message{margin: 1.3em 0px 0px 0px; padding: 1px 20px; }
+.margin-reference-buy{margin: 1.3em 0px 0px 0px; padding: 1px 20px; }
+.margin-warning{margin: 1.3em 0px 0px 0px; padding: 1px 20px; }
+.margin-faq-question{margin:0px 0px 0px 0px; padding: 1px 20px; }
+.margin-text{}
+
+.header-1{color: var(--arduino-color-3);}
+.header-2{color: var(--arduino-color-4);}
+.header-3{color: var(--arduino-color-5);}
+.header-4{}
+.question{font-style: italic; background-color: #FCF2E8;}
+.list-unordered-1{}
+.list-unordered-2{}
+.list-unordered-3{}
+.list-ordered-1{}
+.list-ordered-2{}
+.image{}
+.link{}
+.blockquote{}
+
+.bullet{position: relative;}
+.bullet::before {
+	content: "";
+	margin: 0px;
+	padding: 0px;
+	left: 0;
+	position: absolute;
+}
+
+.bullet.icon::before {
+	width: 0.5ex;
+	height: 0.5ex;
+	top: 50%;
+	z-index: 2;
+}
+
+
+
+.list-unordered-1 .bullet.line{margin-right: 28px;}
+.list-unordered-1 .bullet.line::before {
+	height: 0px;
+	width: 22px;
+	top: calc(50% - 1px);
+	display: inline-block;
+	border-top: 2px solid var(--arduino-color-3);
+	z-index: 1;
+}
+
+.list-unordered-2 .bullet.line{margin-right: 22px;}
+.list-unordered-2 .bullet.line::before {
+	height: 0px;
+	width: 16px;
+	top: calc(50% - 1px);
+	display: inline-block;
+	border-top: 2px solid var(--arduino-color-3);
+	z-index: 1;
+}
+
+.list-unordered-3 .bullet.line{margin-right: 18px;}
+.list-unordered-3 .bullet.line::before {
+	height: 8px;
+	width: 8px;
+	margin: 0;
+	position: absolute;
+	top: 50%;
+	-ms-transform: translateY(-50%);
+	transform: translateY(-50%);
+	border-radius: 50%;
+	display: inline-block;
+	background-color: var(--arduino-color-3);
+	z-index: 1;
+}
+
+.list-unordered-1 .icon::before {
+	transform: translateY(-50%) rotate(45deg);
+	border: 2px solid var(--arduino-color-1);
+	background: var(--arduino-color-3);
+}
+
+.list-unordered-2 .icon::before {
+	transform: translateY(-50%);
+	border: 2px solid var(--arduino-color-1);
+	background: var(--arduino-color-3);
+}
+
+.bullet.line.pin::before {
+	width: 30px;
+}
+
+.bullet-transparent {
+	opacity: 0;
+}
+
+ol {
+	counter-reset: myCounter;
+	padding: 0;
+	margin-block-start: 0;
+    margin-block-end: 0;
+}
+ol > li{
+	list-style: none;
+}
+.list-ordered-1:before {
+	counter-increment: myCounter;
+	content:counter(myCounter)'.';
+	color: #E67E22;
+	display: inline-block;
+	text-align: left;
+	font-weight: bold;
+	margin: 0px 8px 0px 0px; 
+	border-radius: 999px;
+}
+
+.list-ordered-2:before {
+	counter-increment: myCounter;
+	content:counter(myCounter)'.';
+	color: #E67E22;
+	display: inline-block;
+	text-align: left;
+	font-weight: bold;
+	margin: 0px 8px 0px 0px; 
+	border-radius: 999px;
+}
+
+li {display: flex;}
+
+.code-container{
+	position: relative;
+	width: 100%;
+	margin: 5px 0px 20px 0px;
+}
+
+.code-copy-button{
+	position: absolute;
+	top: 2px;
+	right: 0px;
+	width: 25px;
+	height: 25px;
+	line-height: 25px;
+	border: 2px solid var(--arduino-color-1);
+	cursor: pointer;
+	text-align: center;
+	color: white;
+	background-color: var(--arduino-color-2);
+	z-index: 5;
+}
+
+.code-copy-button:hover{
+	background-color: var(--arduino-color-1);
+}
+
+.code-copy-toast{
+	visibility: hidden;
+	position: absolute;
+	top: calc(2px + 25px + 4px + 10px);
+	right: 0px;
+	padding: 5px;
+	text-align: center;
+	z-index: 1;
+	color: white;
+	background-color: #333;
+}
+
+.code-copy-toast:after{
+	position: absolute;
+	top: -8px;
+	right: 11px;
+	width: 0;
+	height: 0;
+	border-bottom: solid 8px #333;
+	border-left: solid 8px transparent;
+	border-right: solid 8px transparent;
+	margin-left: -8px;
+	content:'';
+}
+
+.code-copy-toast.show{
+	visibility: visible;
+	-webkit-animation: fadein 1s, fadeout 1s 2.5s;
+	animation: fadein 1s, fadeout 1s 2.5s;
+}
+
+@-webkit-keyframes fadein{from{opacity: 0;} to{opacity: 1;}}
+@keyframes fadein{from{opacity: 0;} to{opacity: 1;}}
+@-webkit-keyframes fadeout{from{opacity: 1;}  to{opacity: 0;}}
+@keyframes fadeout{from{opacity: 1;} to{opacity: 0;}}
+
+.code{
+	width: 100%;
+	max-height: 600px;
+	padding: 0;
+	/*border: 2px solid var(--arduino-color-1);*/
+	margin: 0px;
+	line-height: 1.5;
+	overflow-y: auto;
+	overflow-x: auto;
+	white-space: pre;
+	font-family: "Courier New", Courier, monospace;
+	color: black;
+	background-color: var(--background-color);
+}
+
+.line-code::before{
+	width: 35px;
+	padding-right: 5px;
+	border-right: 5px solid var(--arduino-color-2);
+	display: inline-block;
+	content: var(--num);
+	text-align: right;
+	color: white;
+	background-color: var(--arduino-color-1);
+}
+
+.line-code-first::before{
+	padding-top: 5px;
+}
+.line-code-last::before{
+	padding-bottom: 5px;
+}
+.line-code-first{padding-top: 10px;}
+
+.code-inline{
+	font-family: "Courier New", Courier, monospace;
+	color: black;
+	background-color: var(--background-color);
+}
+
+:root {
+	--sm-unit-height: calc(3 * var(--sm-width-percent));
+	--sm-unit-margin: calc(0.8 * var(--sm-width-percent));
+	--sm-part-height: calc(var(--sm-unit-height) + var(--sm-unit-margin) * 2 + 2px);
+}
+
+.sm-container {
+	width: 100%;
+	max-width:700px;
+	margin-bottom: 20px;
+	border: 1px solid #1883D7;
+	background-color: #F0F0F0;
+	color: #333333;
+	font-size: calc(2 * var(--sm-width-percent));
+	font-family: Arial, Helvetica, sans-serif;
+	box-shadow: 0 0 5px 1px lightgrey;
+}
+.sm-head {
+	height: var(--sm-part-height);
+	background-color: white;
+}
+.sm-shoulder {height: var(--sm-part-height); font-size: 0;}
+.sm-console {
+	min-height: calc(15 * var(--sm-width-percent));
+	border: 1px solid #828790;
+	padding: 2px;
+	line-height: 1.2;
+	white-space: pre;
+    font-family: "Courier New", Courier, monospace;
+	background-color: white;
+	overflow-x: auto;
+}
+.serial-console {
+	background-image: url('../images/page/watermark.png');
+	background-repeat: repeat;
+}
+.sm-foot {height: var(--sm-part-height); line-height: var(--sm-part-height);}
+.sm-head .right {
+	height: calc(1.5 * var(--sm-width-percent));
+	width: calc(1.5 * var(--sm-width-percent));
+	margin: calc((var(--sm-part-height) - 1.5 * var(--sm-width-percent) - 2px) / 2) calc(1 * var(--sm-width-percent));
+	float: right;
+	display: inline-block;
+	border: 1px solid white;
+	position: relative;
+}
+.sm-head .left {
+	height: calc(2.7 * var(--sm-width-percent));
+	line-height: calc(2.7 * var(--sm-width-percent));
+	margin: calc((var(--sm-part-height) - 2.7 * var(--sm-width-percent) - 2px) / 2) var(--sm-unit-margin);
+	margin-right: 0px;
+	float: left;
+	display: inline-block;
+	border: 1px solid white;
+	position: relative;
+	background-repeat: no-repeat;
+	background-size:contain;
+}
+.sm-head .left-icon {
+	width: calc(2.7 * var(--sm-width-percent));
+}
+.sm-head div span {
+	height: 0px;
+	width: calc(1.8 * var(--sm-width-percent));
+	display: inline-block;
+	border: 1px solid #000000;
+	position: absolute;
+	top: calc((var(--sm-unit-height) - 1.8 * var(--sm-width-percent)) / 2);
+	left: -2px;
+}
+.sm-head div:nth-child(1) span:nth-child(1) {
+	transform: rotate(-45deg);
+}
+.sm-head div:nth-child(1) span:nth-child(2) {
+	transform: rotate(45deg);
+}
+.sm-head div:nth-child(2) {
+	border: 1px solid #000000;
+}
+.sm-shoulder div, .sm-foot div {
+	height: var(--sm-unit-height);
+	line-height: var(--sm-unit-height);
+	margin: var(--sm-unit-margin);
+	border: 1px solid #ABADB3;
+	text-align: center;
+	vertical-align: top;
+	display: inline-block;
+}
+.sm-shoulder div {
+	width: calc(9 * var(--sm-width-percent));
+	margin-left: 0px;
+	font-size: calc(2 * var(--sm-width-percent));
+	float: right;
+	background-color: #E1E1E1;
+}
+.sm-shoulder .text {
+	width: calc(100% - 9 * var(--sm-width-percent) - 3 * var(--sm-unit-margin) - 4px - 3px);
+	padding-left: 3px;
+	float: left;
+	text-align: left;
+	font-weight: bold;
+	color: black;
+	background-color: white;
+}
+.sm-foot div {
+	padding: 0px calc(1.5 * var(--sm-width-percent));
+	background-color: #E1E1E1;
+	float: right;
+	font-weight: normal;
+}
+.sm-foot span {
+	margin: var(--sm-unit-margin);
+	vertical-align: top;
+}
+.sm-foot .checkbox{
+	width: calc(1.8 * var(--sm-width-percent));
+	height: calc(1.8 * var(--sm-width-percent));
+	margin-top: calc((var(--sm-part-height) - 1.8 * var(--sm-width-percent) - 2px) / 2);
+	margin-bottom: calc((var(--sm-part-height) - 1.8 * var(--sm-width-percent) - 2px) / 2);
+	margin-right: 0px;
+	background-color: white;
+	border: 1px solid #333333;
+	display: inline-block;
+}
+.chevron::before {
+	border-style: solid;
+	border-width: 0.1em 0.1em 0 0;
+	content: '';
+	display: inline-block;
+	height: 0.45em;
+	left: 0.15em;
+	position: relative;
+	top: 0.35em;
+	transform: rotate(-45deg);
+	vertical-align: top;
+	width: 0.45em;
+	transform: rotate(135deg);
+}
+
+.note{color: white; background-color: var(--arduino-color-5);}
+.message{color: white; background-color: var(--base-color);}
+.reference-buy{color: white; background-color: var(--base-color);}
+.warning{color: white; background-color: #ac3b3b;}
+.difficulty-note {padding: 1px 20px; color: white; background-color: var(--arduino-color-3);}
+.special-message {margin: 10px 0px; padding: 1px 20px; color: white; background-color: #F7788A;}
+
+.text{}
+
+.faq-question-title{margin: 25px 0 0 0; color: var(--arduino-color-1); }
+.faq-answer-title { border-bottom: 1px solid var(--arduino-color-3); margin: 10px 0px; color: var(--arduino-color-1); font-weight: bold;}
+.faq-question {font-style: italic; background-color: #FCF2E8;}
+
+.fritzing{
+	padding: 0px;
+	margin: 0px;
+	color: gray;
+}
+
+.group-container{
+	width: 70%;
+	max-width: 1000px;
+	padding: 50px 0px;
+	margin: auto;
+	text-align: center;
+	margin-bottom: 60px;
+}
+.group-container .title{
+	padding: 0px 0px 20px 0px;
+}
+.group-wrapper{
+	width: 100%;
+	text-align: center;
+	display: grid;
+	grid-gap: 70px 70px;
+	justify-items: center;
+}
+.tutorial-group{
+	width: calc(100% - 20px * 2);
+	padding: 10px 20px 20px 20px;
+	border-radius: 5px;
+	display: inline-block;
+	vertical-align: top;
+	color: #fff;
+	background-color: #00878F;
+}
+.tutorial-group-header{
+	padding: 5px 20px;
+	border-bottom: 2px solid #E47128;
+}
+.tutorial-group-header p{
+	padding: 5px 0px 0px 0px;
+	margin: 0px;
+	color: #E47128;
+	font-weight: bold;
+}
+.tutorial-group-header img{
+	width: 100px;
+	height: 100px;
+	border-radius: 50%;
+	object-fit: contain;
+	background-color: white;
+}
+.tutorial-group-content{
+	padding: 8px 20px 5px 20px;
+	text-align: left;
+}
+.tutorial-group-content p{
+	padding: 4px 0px;
+	margin: 0px;
+	text-align: left;
+}
+
+.nav-x a:link{color: white;} /* unvisited link */
+.nav-x a:visited{color: white;} /* visited link */
+.nav-x a:hover:not(.active){color: var(--arduino-color-3);} /* mouse over link */
+.nav-x .active{color: var(--arduino-color-3) !important;} /* selected link */
+
+.nav-y-link a:link{color: #32A8FF;} /* unvisited link */
+.nav-y-link a:visited{color: #32A8FF;} /* visited link */
+.nav-y-link a:hover:not(.active){background-color: #ADBDD1; } /* mouse over link */
+.nav-y-link .active{color: white !important; background-color: var(--arduino-color-1);} /* selected link */
+
+.main-body a:link{color: #32A8FF;} /* unvisited link */
+.main-body a:visited{color: #32A8FF;} /* visited link */
+.main-body a:hover{color: #32A8FF; text-decoration: underline;} /* mouse over link */
+
+/*
+.main-body a:link{color: var(--arduino-color-1);}
+.main-body a:visited{color: var(--arduino-color-1);}
+.main-body a:hover{color: var(--arduino-color-1); text-decoration: underline;}*/
+
+
+.next-previous a:link{color: white; background-color: var(--arduino-color-1);} /* unvisited link */
+.next-previous a:visited{color: white;} /* visited link */
+.next-previous a:hover{color: var(--arduino-color-3);} /* mouse over link */
+
+.bookmark-link-wrapper a:link{color: #32A8FF;} /* unvisited link */
+.bookmark-link-wrapper a:visited{color: #32A8FF;} /* visited link */
+.bookmark-link-wrapper a:hover:not(.active){text-decoration: underline; border-left: 3px solid #BFBFBF;} /* mouse over link */
+.bookmark-active{
+	border-left: 3px solid var(--arduino-color-3) !important;
+	color: var(--arduino-color-3) !important;
+}
+
+.tutorial-group a{text-decoration: underline;}
+.tutorial-group a:link{color: white;} /* unvisited link */
+.tutorial-group a:visited{color: white;} /* visited link */
+.tutorial-group a:hover{color: var(--arduino-color-3);} /* mouse over link */
+
+.video-container {width: 100%; padding-top: 10px;}
+.video-wrapper {
+	position: relative;
+	width: 100%;
+	padding-top: 56.25%; /* 16:9 Aspect Ratio */
+}
+.video-frame {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+}
+
+.amazon-banner {display: block; text-align: center; padding-top: 10px;}
+
+.gg-ad {margin: 30px 0px 10px 0px;}
+.gg-ad-middle {padding-top: 20px;}
+.my-ad-top {}
+.my-ad-top-small {margin-top: 25px;}
+
+.footer-fixed a{color: #00a7e9;}
+.footer-fixed a:link{color: #00a7e9;} /* unvisited link */
+.footer-fixed a:visited{color: #00a7e9;} /* visited link */
+.footer-fixed a:hover{color: #00a7e9; text-decoration: underline;} /* mouse over link */
+
+
+.message a{font-weight: bold; color: #66ff00; text-decoration: underline;}
+.message a:link{color: #66ff00;  text-decoration: underline;} /* unvisited link */
+.message a:visited{color: #66ff00; text-decoration: underline;} /* visited link */
+.message a:hover{color: #66ff00; text-decoration: underline;} /* mouse over link */
+
+html{font-size: 14px}
+body{font-size: 1.125rem;}
+.table-default{font-size: 1rem;}
+.table-amazon{font-size: 1.125rem;}
+.table-faq{font-size: 1.25rem;}
+.title{font-size: 2rem;}
+.header-1{font-size: 1.75rem;}
+.header-2{font-size: 1.5rem;}
+.header-3{font-size: 1.375rem;}
+.nav-x{font-size: 1.375rem;}
+.nav-y{font-size: 1.125rem;}
+.main-body{font-size: 1.25rem;}
+.bookmark-container{font-size: 1.125rem;}
+.tutorial-group-header p{font-size: 1.5rem;}
+
+.list-unordered-1{font-size: 1.125rem;}
+.list-unordered-2{font-size: 1rem;}
+.list-unordered-3{font-size: 1rem;}
+.list-ordered-1{font-size: 1.125rem;}
+.list-ordered-2{font-size: 1rem;}
+
+.message .list-unordered-1{font-size: 1.25rem;}
+
+.faq-question-title, .faq-answer-title{font-size: 1.75rem;}
+
+.code, .command-prompt{font-size: 1rem;}
+.code-copy-button{font-size: 1.25rem;}
+.code-copy-toast{font-size: 0.875rem;}
+.fritzing{font-size: 0.875rem;}
+.sm-console {font-size: 1.125rem;}
+.next, .previous{font-size: 1rem;}
+.copyright{font-size: 1rem;}
+.disclosure{font-size: 1.5rem;}
+.disclosure-content{font-size: 1.125rem;}
+.affiliate-note{font-size: 1.125rem;}
+.image-source{font-size: 1.125rem;}
+.footer-fixed{font-size: 1.125rem;}
+
+.video-comming-soon {width: 70%; max-width: 400px;}
+
+.image-zoomable:hover {cursor: zoom-in;}
+.modal-image:hover {cursor: zoom-out;}
+
+.modal-container {
+	display: none;
+	position: fixed;
+	z-index: 50;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0,0,0,0.7);
+}
+
+.modal-image {
+	padding: 3%;
+	display: block;
+	width: 90%;
+	height: 90%;
+	object-fit: contain ;
+	z-index: 60;
+	-webkit-animation-name: imagezoom;
+	-webkit-animation-duration: 0.6s;
+	animation-name: imagezoom;
+	animation-duration: 0.6s;
+}
+
+@-webkit-keyframes imagezoom {
+  from {-webkit-transform:scale(0)} 
+  to {-webkit-transform:scale(1)}
+}
+
+@keyframes imagezoom {
+	from {transform:scale(0);transform-origin: 50% 50%;} 
+	to {transform:scale(1);transform-origin: 50% 50%;}
+}
+
+.modal-close {
+	position: absolute;
+	top: 15px;
+	right: 35px;
+	color: #f1f1f1;
+	font-size: 40px;
+	font-weight: bold;
+	transition: 0.3s;
+}
+
+.modal-close:hover,
+.modal-close:focus {
+	color: #bbb;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.ags-sponsor {
+	padding: 30px 0px;
+	font-size: 1rem;
+}
+
+.support-us {
+	padding-top: 15px;
+	font-style: italic;
+	color: #DC143C;
+}
+
+.available-for-hide {
+	padding-top: 15px;
+	font-weight: bold;
+	font-style: italic;
+	color: #F7788A;
+}
+
+.email {
+	font-weight: bold;
+	font-style: italic;
+	color: #F7788A;
+}
+
+.follow-us {padding: 30px 0px 0px 0px ;}
+
+.share-with-your-friend {padding: 0px 0px 0px 0px ;}
+
+.amazon-text {
+	color: #FF9900;
+	font-weight: bold;
+}
+
+.sponsor-ads-wrapper {
+	padding: 0px 5px 2px 5px;
+	border: 1px solid #E6E6E6;
+	display: block;
+	position: relative;
+	color: #CCCCCC;
+	text-align: center;
+}
+
+.sponsor-ads-wrapper-right {
+	padding: 0 !important;
+	border: 0 !important;
+}
+
+.sponsor-ads-top {
+	width: 100%;
+	object-fit: contain;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.sponsor-ads-right {
+	width: 100%;
+	object-fit: contain;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.sponsor-ads-top {max-height: 120px;}
+.sponsor-ads-notice{
+	position: absolute;
+	bottom:5px; 
+	left: 5px;
+	font-size: 0.85rem;
+	font-style: italic;
+	color: #00FF00;
+}
+
+.sponsor-link-notice {
+	position: static !important;
+	padding-bottom: 5px;
+}
+
+.sponsor-ads-wrapper > div > div {
+	margin: 0px 0px 10px 0px;
+}
+
+.sponsor-link {
+	border: 1px solid #E6E6E6;
+	margin: 5px 0px;
+	padding: 5px 15px;
+	border-radius: 999px;
+}
+
+
+.mark-triangle {
+	width: 0;
+    height: 0;
+    border-right: 15px solid transparent;
+    border-top: 30px solid;
+    float: left!important;
+	color: var(--base-color);
+}
+
+.sponsor-post-mark {
+	height: 30px;
+    background-color: var(--base-color);
+    border-color: var(--base-color);
+    display: flex;
+    line-height: 30px;
+    padding-left: 8px;
+    padding-right: 3px;
+    color: white;
+    float: left!important;
+}
+
+sup, .sup {
+	font-weight: bold;
+	color: red;
+}
+.ref-emphasize-1, .ref-emphasize-2{
+	font-weight: bold;
+}
+
+.ref-link-type{
+	color: var(--arduino-color-3);
+	text-transform: uppercase;
+}
+
+.command{
+	padding: 5px 10px;
+	width: calc(100% - 20px); 
+	color: white;
+	background-color: #283142;
+}
+
+
+.command-prompt{max-width: initial !important;}
+
+.cmd-console {
+	min-height: 100px;
+	color: white;
+	background-color: black;
+	font-size: 1rem;
+}
