@@ -43,7 +43,7 @@ void loop(){
     lcd.print(key);                 // print key at (cursorColumn, 0)
 
     cursorColumn++;                 // move cursor to next position
-    if(cursorColumn == 16) {        // if reaching limit, clear LCD
+    if(cursorColumn == 20) {        // if reaching limit, clear LCD
       lcd.clear();
       cursorColumn = 0;
     }
