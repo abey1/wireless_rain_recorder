@@ -8,6 +8,10 @@
 DS3231 clock;
 RTCDateTime dt;
 
+const int  buttonPin = 2;    // the pin that the reedswitch is attached to
+int buttonPushCounter = 0;   // counter for the number of times reed switch detects magnet presses
+int buttonState = 0;         // current state of the reed switch
+
 const int ROW_NUM    = 4; // four rows
 const int COLUMN_NUM = 4; // four columns
 
@@ -40,9 +44,11 @@ char latitude[20];
 char resetKey;
 
 //previous millis is used to hold and save millis() to kim the lcd
-long previousMillis; 
+long previousMillis; //for backlight dim
+long previousMillisLcd; //to display seconds on lcd
 //the interval for the lcd to stay showing light after user pressed 'D'
 long interval = 10000;
+long intervalToLcd = 4000;
 
 //longIndex and latIndex are used to trace when user inputs value for longitude and latitude
 //longDisplayIndex and latDisplayIndex are used to display latitude and longitude to lcd
@@ -172,6 +178,9 @@ void setup(){
   //begin clock
   clock.begin();
 
+  //initialize Serial for debuging purposes
+  Serial.begin(19200);
+  
   // uncomment this to assign compiling date and time
   // Set sketch compiling time
   //clock.setDateTime(__DATE__, __TIME__);
@@ -183,6 +192,23 @@ void setup(){
 
   //assign previousMillis current time
   previousMillis = millis(); 
+  previousMillisLcd = millis();
+
+
+  lcd.clear();
+  lcd.setCursor(0,1);
+  lcd.print("(Lo:");
+  lcd.setCursor(4,1);
+  lcd.print(longitude);
+  lcd.setCursor(4+longDisplayIndex,1);
+  lcd.print(",La:");
+  lcd.print(latitude);
+  lcd.setCursor(4+longDisplayIndex+latDisplayIndex+4,1);
+  lcd.print(")");
+  lcd.setCursor(0,2);
+  lcd.print("reed :");
+  lcd.setCursor(0,3);
+  lcd.print("memory->");
 }
 
 void loop(){
@@ -203,17 +229,15 @@ void loop(){
     previousMillis = millis();
   }
 
-  //prints the longitude and latitude on second line
-  lcd.clear();
-  lcd.setCursor(0,1);
-  lcd.print("(Lo:");
-  lcd.setCursor(4,1);
-  lcd.print(longitude);
-  lcd.setCursor(4+longDisplayIndex,1);
-  lcd.print(",La:");
-  lcd.print(latitude);
-  lcd.setCursor(4+longDisplayIndex+latDisplayIndex+4,1);
-  lcd.print(")");
+   buttonState = digitalRead(buttonPin);
+
+   if (buttonState != HIGH) {
+     buttonPushCounter++;
+     Serial.println("on");
+     Serial.print("number of button pushes: ");
+     Serial.println(buttonPushCounter);
+   }
+
 
   //dims light of lcd after interval seconds
   if(millis() - previousMillis > interval) {
@@ -229,6 +253,6 @@ void loop(){
   //prints clock on first line
   lcd.setCursor(0,0);
   lcd.print(timeBuf);
-  
-  delay(1000);
+  lcd.setCursor(7,2);
+  lcd.print(buttonPushCounter);
 }
