@@ -47,7 +47,7 @@ char resetKey;
 long previousMillis; //for backlight dim
 long previousMillisLcd; //to display seconds on lcd
 //the interval for the lcd to stay showing light after user pressed 'D'
-long interval = 10000;
+long interval = 30000;
 long intervalToLcd = 4000;
 
 //longIndex and latIndex are used to trace when user inputs value for longitude and latitude
@@ -208,7 +208,7 @@ void setup(){
   lcd.setCursor(0,2);
   lcd.print("reed :");
   lcd.setCursor(0,3);
-  lcd.print("memory->");
+  lcd.print("memory :");
 }
 
 void loop(){
