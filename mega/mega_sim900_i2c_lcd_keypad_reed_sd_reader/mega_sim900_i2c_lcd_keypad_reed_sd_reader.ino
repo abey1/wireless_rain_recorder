@@ -9,6 +9,55 @@
 #include <SPI.h>
 #include <SD.h>
 
+//import for GSM module
+#include <SoftwareSerial.h>
+SoftwareSerial GSM(7, 8); // RX, TX
+
+//gsm specific variables and functions
+enum _parseState {
+  PS_DETECT_MSG_TYPE,
+
+  PS_IGNORING_COMMAND_ECHO,
+
+  PS_HTTPACTION_TYPE,
+  PS_HTTPACTION_RESULT,
+  PS_HTTPACTION_LENGTH,
+
+  PS_HTTPREAD_LENGTH,
+  PS_HTTPREAD_CONTENT
+};
+
+enum _actionState{
+  AS_IDLE,
+  AS_WAITING_FOR_RESPONSE  
+};
+
+char* dataBuf;
+char url[130];
+byte actionState = AS_IDLE;
+unsigned long lastActionTime = 0;
+
+byte parseState = PS_DETECT_MSG_TYPE;
+char buffer[80];
+byte pos = 0;
+
+int contentLength = 0;
+
+void resetBuffer() {
+  memset(buffer, 0, sizeof(buffer));
+  pos = 0;
+}
+
+void sendGSM(const char* msg, int waitMs = 500) {
+  GSM.println(msg);
+  delay(waitMs);
+  while(GSM.available()) {
+    parseATText(GSM.read());
+  }
+}
+
+//gsm specific variables and functions
+
 DS3231 clock;
 RTCDateTime dt;
 
@@ -74,11 +123,14 @@ File nextFile;
 //number of files in SD card to be written
 int noOfFile = 1;
 
-//number of files counter to be sent through GSM module
+//number of files to be sent to server by GSM
 int noOfFileGSM = 1;
 
-//variable to hold noOfFile changed to string
+//variable to hold noOfFile changed to string for SD card
 char sNoOfFile[10];
+
+//variable to hold noOfFile changed to string for GSM module
+char sNoOfFileGSM[10];
 
 //timebuf to hold current time
 char timeBuf[50];
@@ -197,6 +249,16 @@ int getLat(){
 
 void setup(){
 
+  //begin GSM
+  GSM.begin(19200);
+
+  //initialization of gsm
+  sendGSM("AT+SAPBR=3,1,\"APN\",\"internet\"");  
+  sendGSM("AT+SAPBR=1,1",3000);
+  sendGSM("AT+HTTPINIT");  
+  sendGSM("AT+HTTPPARA=\"CID\",1");
+  //initialization of gsm
+  
   //begin clock
   clock.begin();
 
@@ -300,6 +362,38 @@ void loop(){
   lcd.print(buttonPushCounter);
 }
 
+void sendToServer(){
+  int noOfFileGSMTemp = noOfFileGSM;
+  
+  while(noOfFileGSMTemp <= noOfFile){
+    
+    if(actionState == AS_IDLE){
+
+      //change noOfFileGSMTemp to sNoOfFileGSM string
+      itoa(noOfFileGSMTemp,sNoOfFileGSM,10);
+      
+      //assign next file after concatinating .TXT file to our string
+      nextFile = SD.open(strcat(sNoOfFileGSM, ".TXT"));
+
+      if (nextFile) {
+        // read from the file until there's nothing else in it:
+        while (nextFile.available()) {
+          nextFile.read(dataBuf,10);
+        }
+        // close the file:
+        nextFile.close();
+
+        sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%d\"",dataBuf);
+        sendGSM(url);
+        sendGSM("AT+HTTPACTION=0");
+        actionState = AS_WAITING_FOR_RESPONSE;
+      }
+      
+      noOfFileGSMTemp++;
+    }
+  }
+}
+
 int writeToSdCard() {
     //converting noOfFile which tracks number of files in sdcard to string which 
     //the string variable is sNoOfFile
@@ -314,8 +408,10 @@ int writeToSdCard() {
       nextFile.close();
       noOfFile++;
       buttonPushCounter=0;
-      readFromSdCard();
-      deleteFromSdCard();
+      //readFromSdCard();
+      //fileExists();
+      //deleteFromSdCard();
+      //fileExists();
     }else{
       // if the file didn't open, print an error:
       Serial.println("error opening file from read");
@@ -351,5 +447,154 @@ int deleteFromSdCard(){
   }else{
     Serial.print("can not delete");
     Serial.print(sNoOfFile);
+  }
+}
+
+void fileExists(){
+  if(SD.exists("*.TXT")){
+    Serial.print("true");
+  }else{
+    Serial.print("false");
+  }
+}
+
+void parseATText(byte b) {
+
+  buffer[pos++] = b;
+
+  if ( pos >= sizeof(buffer) )
+    resetBuffer(); // just to be safe
+
+  /*
+   // Detailed debugging
+   Serial.println();
+   Serial.print("state = ");
+   Serial.println(state);
+   Serial.print("b = ");
+   Serial.println(b);
+   Serial.print("pos = ");
+   Serial.println(pos);
+   Serial.print("buffer = ");
+   Serial.println(buffer);*/
+
+  switch (parseState) {
+  case PS_DETECT_MSG_TYPE: 
+    {
+      if ( b == '\n' )
+        resetBuffer();
+      else {        
+        if ( pos == 3 && strcmp(buffer, "AT+") == 0 ) {
+          parseState = PS_IGNORING_COMMAND_ECHO;
+        }
+        else if ( b == ':' ) {
+          //Serial.print("Checking message type: ");
+          //Serial.println(buffer);
+
+          if ( strcmp(buffer, "+HTTPACTION:") == 0 ) {
+            Serial.println("Received HTTPACTION");
+            parseState = PS_HTTPACTION_TYPE;
+          }
+          else if ( strcmp(buffer, "+HTTPREAD:") == 0 ) {
+            Serial.println("Received HTTPREAD");            
+            parseState = PS_HTTPREAD_LENGTH;
+          }
+          resetBuffer();
+        }
+      }
+    }
+    break;
+
+  case PS_IGNORING_COMMAND_ECHO:
+    {
+      if ( b == '\n' ) {
+        Serial.print("Ignoring echo: ");
+        Serial.println(buffer);
+        parseState = PS_DETECT_MSG_TYPE;
+        resetBuffer();
+      }
+    }
+    break;
+
+  case PS_HTTPACTION_TYPE:
+    {
+      if ( b == ',' ) {
+        Serial.print("HTTPACTION type is ");
+        Serial.println(buffer);
+        parseState = PS_HTTPACTION_RESULT;
+        resetBuffer();
+      }
+    }
+    break;
+
+  case PS_HTTPACTION_RESULT:
+    {
+      if ( b == ',' ) {
+        Serial.print("HTTPACTION result is ");
+        Serial.println(buffer);
+        parseState = PS_HTTPACTION_LENGTH;
+        resetBuffer();
+      }
+    }
+    break;
+
+  case PS_HTTPACTION_LENGTH:
+    {
+      if ( b == '\n' ) {
+        Serial.print("HTTPACTION length is ");
+        Serial.println(buffer);
+        
+        // now request content
+        GSM.print("AT+HTTPREAD=0,");
+        GSM.println(buffer);
+        
+        parseState = PS_DETECT_MSG_TYPE;
+        resetBuffer();
+      }
+    }
+    break;
+
+  case PS_HTTPREAD_LENGTH:
+    {
+      if ( b == '\n' ) {
+        contentLength = atoi(buffer);
+        Serial.print("HTTPREAD length is ");
+        Serial.println(contentLength);
+        
+        Serial.print("HTTPREAD content: ");
+        
+        parseState = PS_HTTPREAD_CONTENT;
+        resetBuffer();
+      }
+    }
+    break;
+
+  case PS_HTTPREAD_CONTENT:
+    {
+      // for this demo I'm just showing the content bytes in the serial monitor
+      //Serial.write(b);
+      //Serial.write("ass");
+      //char s[11];
+      //memcpy(s, b, sizeof b);
+      //Serial.write(s);
+      if(b == 'Y'){
+        Serial.write("yes");
+      }else{
+        Serial.write("no");
+      }
+      contentLength--;
+      
+      if ( contentLength <= 0 ) {
+
+        // all content bytes have now been read
+
+        parseState = PS_DETECT_MSG_TYPE;
+        resetBuffer();
+
+        Serial.print("\n\n\n");
+
+        actionState = AS_IDLE;
+      }
+    }
+    break;
   }
 }
