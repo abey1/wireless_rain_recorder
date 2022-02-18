@@ -1,15 +1,7 @@
-#include <SoftwareSerial.h>
-SoftwareSerial GSM(0, 1); // RX, TX
-
-// this constant won't change:
-const int  buttonPin = 2;    // the pin that the pushbutton is attached to
-const int ledPin = 13;       // the pin that the LED is attached to
-
-// Variables will change:
-int buttonPushCounter = 0;   // counter for the number of button presses
-int buttonState = 0;         // current state of the button
-int lastButtonState = 0;     // previous state of the button
-
+#include<SoftwareSerial.h>     
+SoftwareSerial GSM(18,19);  //RX/TX  
+//SoftwareSerial GSM(7,8);
+//GSM specific settings
 enum _parseState {
   PS_DETECT_MSG_TYPE,
 
@@ -45,95 +37,94 @@ void resetBuffer() {
 }
 
 void sendGSM(const char* msg, int waitMs = 500) {
-  GSM.println(msg);
+  Serial.println(msg);
   delay(waitMs);
   while(GSM.available()) {
-    parseATText(GSM.read());
+    maryam(GSM.read());
   }
 }
+//GSM specific settings
+ 
+const int  buttonPin = 2;    // the pin that the reed switch is attached to  
+int buttonPushCounter = 0;   // counter for the number of times reed switch detects magnet presses
+int buttonState = 0;         // current state of the reed switch
 
-void setup()
-{
+long previousMillisSd;
+long intervalSd = 4000;
 
-  // initialize the button pin as a input:
-  pinMode(buttonPin, INPUT);
-  // initialize the LED as an output:
-  pinMode(ledPin, OUTPUT);
-  // initialize serial communication:
+void setup()      
+{      
+  //start GSM  
   
-  GSM.begin(19200);
+  GSM.begin(19200);  
+  GSM.println("i am working");
   Serial.begin(19200);
-  Serial.println("i am working serial");
-  GSM.println("i am alive");
-  //sendGSM("AT+SAPBR=3,1,\"APN\",\"internet\"");  
-  //sendGSM("AT+SAPBR=1,1",3000);
-  //sendGSM("AT+HTTPINIT");  
-  //sendGSM("AT+HTTPPARA=\"CID\",1");
+  Serial.println("i am alive");
+  //start Serial  
+  //Serial.begin(19200);
+  //Serial.println("be dengel maryam sem");
   
-  //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.halluuethio.com/IOT/receive_number_loop.php?number=%d\"",buttonPushCounter);
-  //sendGSM(url);
-  //sendGSM("AT+HTTPPARA=\"URL\",\"http://www.halluuethio.com/IOT/receive_number_loop.php?number=33\"");
+  sendGSM("AT+SAPBR=3,1,\"APN\",\"internet\"");  
+  sendGSM("AT+SAPBR=1,1",3000);
+  sendGSM("AT+HTTPINIT");  
+  sendGSM("AT+HTTPPARA=\"CID\",1");    
+  
+}    
+  
+void loop()      
+{  
+      
+   buttonState = digitalRead(buttonPin);
+
+   if (buttonState != HIGH) {
+     buttonPushCounter++;
+     GSM.println("on");
+     GSM.print("number of button pushes: ");
+     GSM.println(buttonPushCounter);
+     delay(50);
+   }
+
+     //saves reed switch data to sdreader
+  if(millis() - previousMillisSd > intervalSd){
+    GSM.println("in if");
+    //writeToSdCard();
+    sendToServer();
+    previousMillisSd = millis();
+    
+  }
+
+  while(GSM.available()) {
+    previousMillisSd = millis();
+    maryam(GSM.read());
+  }
+
+  delay(50);
 }
 
-void loop()
-{ 
-  //REEDSWITCH counter
-  // read the pushbutton input pin:
-  buttonState = digitalRead(buttonPin);
-
-  // compare the buttonState to its previous state
-  if (buttonState != lastButtonState) {
-    // if the state has changed, increment the counter
-    if (buttonState == HIGH) {
-      // if the current state is HIGH then the button went from off to on:
-      //Serial.println("off");
-    } else {
-      // if the current state is LOW then the button went from on to off:
-      
-      buttonPushCounter++;
-      Serial.println("on");
-      Serial.print("number of button pushes: ");
-      Serial.println(buttonPushCounter);
-    }
-    // Delay a little bit to avoid bouncing
-    delay(50);
-  }
-  // save the current state as the last state, for next time through the loop
-  lastButtonState = buttonState;
-
-
-  // turns on the LED every four button pushes by checking the modulo of the
-  // button push counter. the modulo function gives you the remainder of the
-  // division of two numbers:
-  if (buttonPushCounter % 4 == 0) {
-    digitalWrite(ledPin, HIGH);
-  } else {
-    digitalWrite(ledPin, LOW);
-  }
-  //REEDSWITCH counter
-  
-  //GSM data sender
-  data = millis();
-  
-  unsigned long now = millis();
-
-  if(actionState == AS_IDLE){
-    if(now > lastActionTime + 10000){
-      //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.halluuethio.com/IOT/receive_number_loop.php?number=%d\"",buttonPushCounter);
+int sendToServer(){
+   if(actionState == AS_IDLE){
+      GSM.println("sending...");
       sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%d\"",buttonPushCounter);
       sendGSM(url);
       sendGSM("AT+HTTPACTION=0");
       buttonPushCounter=0;
-      lastActionTime = now;
-      actionState = AS_WAITING_FOR_RESPONSE;
-    }
+      delay(500);
+      byte x = 0;
+      while(GSM.available()) {
+        x = GSM.read();
+
+      }
+              Serial.print("what i read");
+      Serial.print(x);
+      //actionState = AS_WAITING_FOR_RESPONSE; 
+  }else{
+    GSM.println(actionState);
   }
-   
-  while(GSM.available()) {
-    lastActionTime = now;
-    parseATText(GSM.read());
-  }
-  //GSM data sender
+}
+
+void maryam(byte b){
+
+  Serial.println(b);
 }
 
 void parseATText(byte b) {
