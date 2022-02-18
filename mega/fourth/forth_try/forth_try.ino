@@ -1,17 +1,12 @@
-#include <Keypad.h>
-#include <LiquidCrystal_I2C.h>
-
-//GSM specific include
 #include <SoftwareSerial.h> //software serial library for serial communication b/w arduino & mySerial
 
-//initializing mySerial as our GSM SIM900A
 SoftwareSerial mySerial(12, 13);//connect Tx pin of mySerial to pin 8 of arduino && Rx pin of mySerial to pin no 9 of arduino
 
 char url[130];
 char data[100];
 
-//char buffer[80];
-//byte pos = 0;
+#include <Keypad.h>
+#include <LiquidCrystal_I2C.h>
 
 //import for clock
 #include <Wire.h>
@@ -94,12 +89,6 @@ char sNoOfFile[10];
 
 //timebuf to hold current time
 char timeBuf[50];
-
-//reset buffer everytime before reading
-//void resetBuffer() {
-  //memset(buffer, 0, sizeof(buffer));
-  //pos = 0;
-//}
 
 //this function displays information to input logitude value for user
 int printGetLongInfo(){
@@ -214,11 +203,9 @@ int getLat(){
 }
 
 void setup(){
-  //-----------------------------------------------------
-  //setup for the GSM SIM900A
-  mySerial.begin(19200);
-  
-  //initialize Serial for debuging purposes
+
+  //gsm_setup
+    mySerial.begin(19200);
   Serial.begin(19200);
 
   Serial.println("Config SIM900...");
@@ -257,11 +244,14 @@ void setup(){
    mySerial.println("AT+HTTPINIT");
    delay(2000); 
    toSerial();
-   //setup for the GSM SIM900A
-   //-----------------------------------------------------
-  
+  //gsm_setup
+
+
   //begin clock
   clock.begin();
+
+  //initialize Serial for debuging purposes
+  Serial.begin(19200);
   
   // uncomment this to assign compiling date and time
   // Set sketch compiling time
@@ -376,7 +366,7 @@ int writeToSdCard() {
       buttonPushCounter=0;
       readFromSdCard();
       deleteFromSdCard();
-      sendData();
+      sendToServer();
     }else{
       // if the file didn't open, print an error:
       Serial.println("error opening file from read");
@@ -387,9 +377,6 @@ int writeToSdCard() {
 
 
 int readFromSdCard(){
-
-  //reset buffer
-  //resetBuffer();
   // re-open the file for reading:
   //sNoOfFile is used here because it is concatinated to .txt file before in write
   nextFile = SD.open(sNoOfFile);
@@ -399,12 +386,7 @@ int readFromSdCard(){
     // read from the file until there's nothing else in it:
     while (nextFile.available()) {
       Serial.write(nextFile.read());
-      //buffer[pos++] = nextFile.read();
     }
-
-    //Serial.write("--------------->");
-    //Serial.write(buffer);
-    
     // close the file:
     nextFile.close();
   } else {
@@ -423,22 +405,20 @@ int deleteFromSdCard(){
   }
 }
 
-
-//send data through GSM module
-void sendData() {
-   // initialize http service
+void sendToServer(){
+     // initialize http service
    mySerial.println("AT+HTTPINIT");
-   //delay(2000); 
+   delay(2000); 
    toSerial();
  
    // set http param value
    memset(data, 0, 100);
    memset(url, 0, 130);
 
-   sprintf(data,"lema");
+   sprintf(data,"kebede");
    sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",data);
-   //mySerial.println(url);
-   mySerial.println("AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=5\"");
+   mySerial.println(url);
+   //mySerial.println("AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=5\"");
 
    delay(5000);
    toSerial();
@@ -459,6 +439,8 @@ void sendData() {
    toSerial();
    delay(300);
 
+   mySerial.println("");
+   delay(10000);
 }
 
 void toSerial()
