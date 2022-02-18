@@ -1,6 +1,15 @@
 #include <Keypad.h>
 #include <LiquidCrystal_I2C.h>
 
+//GSM specific include
+#include <SoftwareSerial.h> //software serial library for serial communication b/w arduino & mySerial
+
+//initializing mySerial as our GSM SIM900A
+SoftwareSerial mySerial(12, 13);//connect Tx pin of mySerial to pin 8 of arduino && Rx pin of mySerial to pin no 9 of arduino
+
+char url[130];
+char data[100];
+
 //import for clock
 #include <Wire.h>
 #include <DS3231.h>
@@ -196,12 +205,54 @@ int getLat(){
 }
 
 void setup(){
-
-  //begin clock
-  clock.begin();
-
+  //-----------------------------------------------------
+  //setup for the GSM SIM900A
+  mySerial.begin(19200);
+  
   //initialize Serial for debuging purposes
   Serial.begin(19200);
+
+  Serial.println("Config SIM900...");
+  delay(2000);
+  Serial.println("Done!...");
+  mySerial.flush();
+  Serial.flush();
+
+  // attach or detach from GPRS service 
+  mySerial.println("AT+CGATT?");
+  delay(100);
+  toSerial();
+
+  // bearer settings
+  mySerial.println("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
+  delay(2000);
+  toSerial();
+
+  // bearer settings
+  mySerial.println("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
+  delay(2000);
+  toSerial();
+  delay(2000);
+
+  // bearer settings
+  mySerial.println("AT+SAPBR=1,1");
+  delay(2000);
+  toSerial();
+
+  // bearer settings
+  mySerial.println("AT+SAPBR=2,1");
+  delay(2000);
+  toSerial();
+
+   // initialize http service
+   mySerial.println("AT+HTTPINIT");
+   delay(2000); 
+   toSerial();
+   //setup for the GSM SIM900A
+   //-----------------------------------------------------
+  
+  //begin clock
+  clock.begin();
   
   // uncomment this to assign compiling date and time
   // Set sketch compiling time
@@ -316,6 +367,7 @@ int writeToSdCard() {
       buttonPushCounter=0;
       readFromSdCard();
       deleteFromSdCard();
+      sendData();
     }else{
       // if the file didn't open, print an error:
       Serial.println("error opening file from read");
@@ -351,5 +403,51 @@ int deleteFromSdCard(){
   }else{
     Serial.print("can not delete");
     Serial.print(sNoOfFile);
+  }
+}
+
+
+//send data through GSM module
+void sendData() {
+   // initialize http service
+   mySerial.println("AT+HTTPINIT");
+   //delay(2000); 
+   toSerial();
+ 
+   // set http param value
+   memset(data, 0, 100);
+   memset(url, 0, 130);
+
+   sprintf(data,"lema");
+   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",data);
+   mySerial.println(url);
+   //mySerial.println("AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=5\"");
+
+   delay(5000);
+   toSerial();
+
+   // set http action type 0 = GET, 1 = POST, 2 = HEAD
+   mySerial.println("AT+HTTPACTION=0");
+   delay(6000);
+   toSerial();
+
+   // read server response
+   mySerial.println("AT+HTTPREAD"); 
+   delay(1000);
+   toSerial();
+   delay(2000);
+
+   mySerial.println("");
+   mySerial.println("AT+HTTPTERM");
+   toSerial();
+   delay(300);
+
+}
+
+void toSerial()
+{
+  while(mySerial.available()!=0)
+  {
+    Serial.write(mySerial.read());
   }
 }
