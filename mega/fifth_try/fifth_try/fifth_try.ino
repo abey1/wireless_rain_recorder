@@ -22,6 +22,9 @@ char data[100];
 char buffer[80];
 byte pos = 0;
 
+char bufferGSM[80];
+byte posGSM = 0;
+
 const int  buttonPin = 2;    // the pin that the reedswitch is attached to
 int buttonPushCounter = 0;   // counter for the number of times reed switch detects magnet presses
 int buttonState = 0;         // current state of the reed switch
@@ -97,6 +100,12 @@ char timeBuf[50];
 void resetBuffer() {
   memset(buffer, 0, sizeof(buffer));
   pos = 0;
+}
+
+//reset bufferGSM before reading
+void resetBufferGSM() {
+  memset(bufferGSM, 0, sizeof(bufferGSM));
+  posGSM = 0;
 }
 
 //this function displays information to input logitude value for user
@@ -368,7 +377,12 @@ int writeToSdCard() {
     if(nextFile){
       nextFile.print(timeBuf);
       nextFile.print("<->");
+      nextFile.print(longitude);
+      nextFile.print("<->");
+      nextFile.print(latitude);
+      nextFile.print("<->");
       nextFile.print(buttonPushCounter);
+
       
       nextFile.close();
       noOfFile++;
@@ -435,7 +449,8 @@ void sendToServer(){
    memset(url, 0, 130);
 
    sprintf(data,"kebede");
-   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
+   //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
+   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data.php?data=%s\"",buffer);
    mySerial.println(url);
    //mySerial.println("AT+HTTPPARA=\"URL\",\"https://www.nrwlpms.com/sim900/get_data.php?pre=%222022-02-18%202014:33:38%3C-%3E0%22\"");
 
@@ -464,8 +479,16 @@ void sendToServer(){
 
 void toSerial()
 {
+  resetBufferGSM();
+  
   while(mySerial.available()!=0)
   {
-    Serial.write(mySerial.read());
+    byte b = mySerial.read();
+    bufferGSM[posGSM++] = b;
+    if(b == '^'){
+      Serial.write("yes yes i got it");
+    }
+    //Serial.write(mySerial.read());
   }
+  Serial.write(bufferGSM);
 }
