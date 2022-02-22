@@ -26,7 +26,8 @@ char bufferGSM[80];
 byte posGSM = 0;
 
 const int  buttonPin = 2;    // the pin that the reedswitch is attached to
-int buttonPushCounter = 0;   // counter for the number of times reed switch detects magnet presses
+int buttonPushCounter = 0; // counter for the number of times reed switch detects magnet presses
+int buttonPushCounterHistory = 0;
 int buttonState = 0;         // current state of the reed switch
 
 const int ROW_NUM    = 4; // four rows
@@ -93,21 +94,14 @@ int noOfFileGSM = 1;
 //variable to hold noOfFile changed to string
 char sNoOfFile[10];
 
-//variable to hold noOfFileGSM changed to string
-char sNoOfFileGSM[10]; 
-
 //timebuf to hold current time
 char timeBuf[50];
 
-//sendFlag when 1 it means send when 0 it means don't send
-int sendFlag = 1; 
-
-//counter if there was no rain to start sending to server
-//this variable will add one when saving file
+//
 int noRainCounter = 0;
 
-//old rain history to compair current rain count with
-int rainHistory = 0;
+//
+int startSending = 0;
 
 //reset buffer everytime before reading
 void resetBuffer() {
@@ -362,15 +356,25 @@ void loop(){
 
   //saves reed switch data to sdreader
   if(millis() - previousMillisSd > intervalSd){
-
-    writeToSdCard();
+    if(startSending == 0){
+       writeToSdCard();
+    }
     previousMillisSd = millis();
     
   }
 
-  if(noRainCounter == 10){
-    readFromSdCard();
-    sendToServer();
+  if(startSending == 1){
+    lcd.backlight();
+    while(noOfFile != 0 && startSending == 1){
+      readFromSdCard();
+      sendToServer();
+      lcd.setCursor(9,3);
+      lcd.print("           ");
+      lcd.setCursor(9,3);
+      lcd.print(sNoOfFile);
+    }
+    startSending = 0;
+    lcd.noBacklight();
   }
   
   // Format the time and date and insert into the temporary buffer.
@@ -384,11 +388,17 @@ void loop(){
   lcd.print(timeBuf);
   lcd.setCursor(7,2);
   lcd.print(buttonPushCounter);
+  lcd.setCursor(9,3);
+  lcd.print(sNoOfFile);
+
 }
 
 int writeToSdCard() {
     //converting noOfFile which tracks number of files in sdcard to string which 
     //the string variable is sNoOfFile
+    if(noOfFile == 0){
+      noOfFile = 1;
+    }
     itoa(noOfFile,sNoOfFile,10);
     
     nextFile = SD.open(strcat(sNoOfFile, ".TXT"), FILE_WRITE);//first argument is filename
@@ -400,30 +410,37 @@ int writeToSdCard() {
       nextFile.print(latitude);
       nextFile.print("<->");
       nextFile.print(buttonPushCounter);
-
-      
+      nextFile.print("<->");
       nextFile.close();
-      noOfFile++;
-
-      //check if there was no rain for the last 15 miniutes
-      if(rainHistory == 0){
+      
+      //if there is no rain add 1 to noRainCounter
+      if(buttonPushCounter == 0){
         noRainCounter++;
       }else{
+        //otherwise make noRainCounter to be zero again
         noRainCounter = 0;
       }
 
-      //put the current rain count on the history
-      rainHistory = buttonPushCounter;
+      //once no rain counter reach 10 start sending and make
+      //no rain counter to be 0
+      if(noRainCounter == 10){
+        noRainCounter = 0;
+        startSending = 1;
+      }else{
+        noOfFile++;
+      }
       
       buttonPushCounter=0;
       //readFromSdCard();
-      deleteFromSdCard();
+      //deleteFromSdCard();
       //sendToServer();
     }else{
       // if the file didn't open, print an error:
       Serial.println("error opening file from read");
     }
     
+    lcd.setCursor(9,3);
+    lcd.print("          ");
 }
 
 
@@ -432,17 +449,17 @@ int readFromSdCard(){
 
   //reset buffer
   resetBuffer();
-
-  itoa(noOfFileGSM,sNoOfFileGSM,10);
-  strcat(sNoOfFileGSM, ".TXT");
+  
+  itoa(noOfFile,sNoOfFile,10);
+  strcat(sNoOfFile, ".TXT");
   // re-open the file for reading:
   //sNoOfFile is used here because it is concatinated to .txt file before in write
-  nextFile = SD.open(sNoOfFileGSM);
+  nextFile = SD.open(sNoOfFile);
   Serial.println(sNoOfFile);
   if (nextFile) {
    
     // read from the file until there's nothing else in it:
-    while (nextFile.available()) {
+    while (nextFile.available() && pos < 34) {
       //Serial.write(nextFile.read());
       
       buffer[pos++] = nextFile.read();
@@ -517,7 +534,15 @@ void toSerial()
     byte b = mySerial.read();
     bufferGSM[posGSM++] = b;
     if(b == '^'){
-      Serial.write("yes yes i got it");
+      //if sent is success delete the file from sd card
+      deleteFromSdCard();
+
+      //subtract from the numer of files
+      noOfFile--;
+    }
+    if(b == '@'){
+      //if fail make send flag to be 0 and stop sending all togather 
+      startSending = 0;
     }
     //Serial.write(mySerial.read());
   }
