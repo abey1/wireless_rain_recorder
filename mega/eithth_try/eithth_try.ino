@@ -459,7 +459,7 @@ int readFromSdCard(){
   if (nextFile) {
    
     // read from the file until there's nothing else in it:
-    while (nextFile.available() && pos < 34) {
+    while (nextFile.available() && pos < 35) {
       //Serial.write(nextFile.read());
       
       buffer[pos++] = nextFile.read();

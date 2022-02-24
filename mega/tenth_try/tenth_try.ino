@@ -88,6 +88,12 @@ File nextFile;
 //number of files in SD card to be written
 int noOfFile = 1;
 
+//number of files history
+int noOfFileHistory = 1;
+
+//send attempt counter
+int sendAttempt = 0;
+
 //number of files counter to be sent through GSM module
 int noOfFileGSM = 1;
 
@@ -362,6 +368,21 @@ void loop(){
 
   if(startSending == 1){
     lcd.backlight();
+
+    if(noOfFileHistory == noOfFile){
+      sendAttempt++;
+    }else{
+      sendAttempt = 0;
+    }
+
+    if(sendAttempt == 5){
+      deleteFromSdCard();
+      noOfFile--;
+      sendAttempt = 0;
+    }
+    
+    noOfFileHistory = noOfFile;
+    
     while(noOfFile != 0 && startSending == 1){
       readFromSdCard();
       sendToServer();
@@ -370,6 +391,7 @@ void loop(){
       lcd.setCursor(9,3);
       lcd.print(sNoOfFile);
     }
+    sendAttempt = 0;
     startSending = 0;
     lcd.noBacklight();
   }
