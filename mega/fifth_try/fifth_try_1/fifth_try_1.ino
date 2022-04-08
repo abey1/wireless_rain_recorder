@@ -16,7 +16,7 @@ SoftwareSerial mySerial(12, 13);//connect Tx pin of mySerial to pin 8 of arduino
 DS3231 clock;
 RTCDateTime dt;
 
-char url[200];
+char url[130];
 char data[100];
 
 char buffer[80];
@@ -26,8 +26,7 @@ char bufferGSM[80];
 byte posGSM = 0;
 
 const int  buttonPin = 2;    // the pin that the reedswitch is attached to
-int buttonPushCounter = 0; // counter for the number of times reed switch detects magnet presses
-int buttonPushCounterHistory = 0;
+int buttonPushCounter = 0;   // counter for the number of times reed switch detects magnet presses
 int buttonState = 0;         // current state of the reed switch
 
 const int ROW_NUM    = 4; // four rows
@@ -65,8 +64,8 @@ char resetKey;
 long previousMillisLCD; //for backlight dim
 long previousMillisSd; //to display seconds on lcd
 //the interval for the lcd to stay showing light after user pressed 'D'
-long intervalLCD = 60000;
-long intervalSd = 300000;
+long intervalLCD = 30000;
+long intervalSd = 4000;
 
 //longIndex and latIndex are used to trace when user inputs value for longitude and latitude
 //longDisplayIndex and latDisplayIndex are used to display latitude and longitude to lcd
@@ -88,12 +87,6 @@ File nextFile;
 //number of files in SD card to be written
 int noOfFile = 1;
 
-//number of files history
-int noOfFileHistory = 1;
-
-//send attempt counter
-int sendAttempt = 0;
-
 //number of files counter to be sent through GSM module
 int noOfFileGSM = 1;
 
@@ -102,15 +95,6 @@ char sNoOfFile[10];
 
 //timebuf to hold current time
 char timeBuf[50];
-
-//
-int noRainCounter = 0;
-
-//
-int startSending = 0;
-
-//system start flag
-int systemStart = 0;
 
 //reset buffer everytime before reading
 void resetBuffer() {
@@ -240,13 +224,9 @@ void setup(){
 
   // initialize the lcd
   lcd.begin(); 
-  lcd.backlight();
 
-  lcd.setCursor(1,1);
-  lcd.print("Initializing GSM...");
-  
   //gsm_setup
-mySerial.begin(19200);
+    mySerial.begin(19200);
   Serial.begin(19200);
 
   lcd.clear();
@@ -322,6 +302,8 @@ mySerial.begin(19200);
   // Set sketch compiling time
   //clock.setDateTime(__DATE__, __TIME__);
   
+  
+  
   //initialize sd card
   if(!SD.begin(chipSelect)){
     Serial.println("initialization failed. Things to check:");
@@ -332,7 +314,7 @@ mySerial.begin(19200);
     while (true);
   }
   
-
+  lcd.backlight();
   getLong();
   getLat();
 
@@ -341,7 +323,21 @@ mySerial.begin(19200);
   //assign previousMillisSd current time
   previousMillisSd = millis();
 
+
   lcd.clear();
+  lcd.setCursor(0,1);
+  lcd.print("(Lo:");
+  lcd.setCursor(4,1);
+  lcd.print(longitude);
+  lcd.setCursor(4+longDisplayIndex,1);
+  lcd.print(",La:");
+  lcd.print(latitude);
+  lcd.setCursor(4+longDisplayIndex+latDisplayIndex+4,1);
+  lcd.print(")");
+  lcd.setCursor(0,2);
+  lcd.print("reed :");
+  lcd.setCursor(0,3);
+  lcd.print("memory :");
 }
 
 void loop(){
@@ -350,10 +346,6 @@ void loop(){
 
   //get date and time from clock
   dt = clock.getDateTime();
-
-  if(systemStart == 0){
-    setTheTimeToStart();
-  }
 
   //if user put 'B' as input go to setup()
   if(resetKey == 'B'){
@@ -383,41 +375,10 @@ void loop(){
 
   //saves reed switch data to sdreader
   if(millis() - previousMillisSd > intervalSd){
-    if(startSending == 0){
-       writeToSdCard();
-    }
+
+    writeToSdCard();
     previousMillisSd = millis();
     
-  }
-
-  if(startSending == 1){
-    lcd.backlight();
-
-    if(noOfFileHistory == noOfFile){
-      sendAttempt++;
-    }else{
-      sendAttempt = 0;
-    }
-
-    if(sendAttempt == 5){
-      deleteFromSdCard();
-      noOfFile--;
-      sendAttempt = 0;
-    }
-    
-    noOfFileHistory = noOfFile;
-    
-    while(noOfFile != 0 && startSending == 1){
-      readFromSdCard();
-      sendToServer();
-      lcd.setCursor(9,3);
-      lcd.print("           ");
-      lcd.setCursor(9,3);
-      lcd.print(sNoOfFile);
-    }
-    sendAttempt = 0;
-    startSending = 0;
-    lcd.noBacklight();
   }
   
   // Format the time and date and insert into the temporary buffer.
@@ -431,63 +392,15 @@ void loop(){
   lcd.print(timeBuf);
   lcd.setCursor(7,2);
   lcd.print(buttonPushCounter);
-  lcd.setCursor(9,3);
-  lcd.print(sNoOfFile);
-
 }
-
-int setTheTimeToStart(){ 
-  dt = clock.getDateTime();   
-  lcd.setCursor(6,1);
-  lcd.print("Wait...");
-  while((dt.minute % 5) != 0){
-    dt = clock.getDateTime();
-    // Format the time and date and insert into the temporary buffer.
-    
-    snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d_%02d:%02d:%02d",
-             dt.year, dt.month, dt.day,
-             dt.hour, dt.minute, dt.second);
-  
-    //prints clock on first line
-    lcd.setCursor(0,0);
-    lcd.print(timeBuf);
-  }
-  systemStart = 1;
-  
-  lcd.clear();
-  lcd.setCursor(0,1);
-  lcd.print("(Lo:");
-  lcd.setCursor(4,1);
-  lcd.print(longitude);
-  lcd.setCursor(4+longDisplayIndex,1);
-  lcd.print(",La:");
-  lcd.print(latitude);
-  lcd.setCursor(4+longDisplayIndex+latDisplayIndex+4,1);
-  lcd.print(")");
-  lcd.setCursor(0,2);
-  lcd.print("reed :");
-  lcd.setCursor(0,3);
-  lcd.print("memory :");
-
-}
-
 
 int writeToSdCard() {
     //converting noOfFile which tracks number of files in sdcard to string which 
     //the string variable is sNoOfFile
-    if(noOfFile == 0){
-      noOfFile = 1;
-    }
-    //create sNoOfFile by converting to string
     itoa(noOfFile,sNoOfFile,10);
-    //concatinate .TXT behind the file
-    strcat(sNoOfFile, ".TXT");
-    //remove the file if it exists
-    SD.remove(sNoOfFile);
     
-    nextFile = SD.open(sNoOfFile, FILE_WRITE);//first argument is filename
+    nextFile = SD.open(strcat(sNoOfFile, ".TXT"), FILE_WRITE);//first argument is filename
     if(nextFile){
-      Serial.println(timeBuf);
       nextFile.print(timeBuf);
       nextFile.print("<->");
       nextFile.print(longitude);
@@ -495,37 +408,19 @@ int writeToSdCard() {
       nextFile.print(latitude);
       nextFile.print("<->");
       nextFile.print(buttonPushCounter);
-      nextFile.print("<->");
-      nextFile.close();
-      
-      //if there is no rain add 1 to noRainCounter
-      if(buttonPushCounter == 0){
-        noRainCounter++;
-      }else{
-        //otherwise make noRainCounter to be zero again
-        noRainCounter = 0;
-      }
 
-      //once no rain counter reach 10 start sending and make
-      //no rain counter to be 0
-      if(noRainCounter == 5){
-        noRainCounter = 0;
-        startSending = 1;
-      }else{
-        noOfFile++;
-      }
       
+      nextFile.close();
+      noOfFile++;
       buttonPushCounter=0;
-      //readFromSdCard();
-      //deleteFromSdCard();
-      //sendToServer();
+      readFromSdCard();
+      deleteFromSdCard();
+      sendToServer();
     }else{
       // if the file didn't open, print an error:
       Serial.println("error opening file from read");
     }
     
-    lcd.setCursor(9,3);
-    lcd.print("          ");
 }
 
 
@@ -535,8 +430,6 @@ int readFromSdCard(){
   //reset buffer
   resetBuffer();
   
-  itoa(noOfFile,sNoOfFile,10);
-  strcat(sNoOfFile, ".TXT");
   // re-open the file for reading:
   //sNoOfFile is used here because it is concatinated to .txt file before in write
   nextFile = SD.open(sNoOfFile);
@@ -544,7 +437,7 @@ int readFromSdCard(){
   if (nextFile) {
    
     // read from the file until there's nothing else in it:
-    while (nextFile.available() && pos < 35) {
+    while (nextFile.available()) {
       //Serial.write(nextFile.read());
       
       buffer[pos++] = nextFile.read();
@@ -619,17 +512,13 @@ void toSerial()
     byte b = mySerial.read();
     bufferGSM[posGSM++] = b;
     if(b == '^'){
-      //if sent is success delete the file from sd card
-      deleteFromSdCard();
-
-      //subtract from the numer of files
-      noOfFile--;
-    }
-    if(b == '@'){
-      //if fail make send flag to be 0 and stop sending all togather 
-      startSending = 0;
+      lcd.clear();
+      Serial.write("yes yes i got it");
+      lcd.print("yes yes i got it");
     }
     //Serial.write(mySerial.read());
-  }
+  } 
+  lcd.clear();
   Serial.write(bufferGSM);
+  lcd.print(bufferGSM);
 }

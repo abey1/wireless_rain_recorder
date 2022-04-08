@@ -457,7 +457,7 @@ int writeToSdCard() {
 
       //once no rain counter reach 10 start sending and make
       //no rain counter to be 0
-      if(noRainCounter == 5){
+      if(noRainCounter == 1){
         noRainCounter = 0;
         startSending = 1;
       }else{
