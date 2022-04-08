@@ -66,7 +66,7 @@ long previousMillisLCD; //for backlight dim
 long previousMillisSd; //to display seconds on lcd
 //the interval for the lcd to stay showing light after user pressed 'D'
 long intervalLCD = 30000;
-long intervalSd = 4000;
+long intervalSd = 900000;
 
 //longIndex and latIndex are used to trace when user inputs value for longitude and latitude
 //longDisplayIndex and latDisplayIndex are used to display latitude and longitude to lcd
