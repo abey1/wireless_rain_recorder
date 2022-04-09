@@ -262,7 +262,7 @@ void setup(){
   
   // uncomment this to assign compiling date and time
   // Set sketch compiling time
-  //clock.setDateTime(__DATE__, __TIME__);
+  clock.setDateTime(__DATE__, __TIME__);
   
   //initialize sd card
   if(!SD.begin(chipSelect)){
@@ -669,8 +669,8 @@ int gsmSetup(){
 
   // bearer settings
   lcd.clear();
-  mySerial.println("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
-  lcd.print("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
+  mySerial.println("AT+SAPBR=3,1,\"APN\",\"etc.com\"");
+  lcd.print("AT+SAPBR=3,1,\"APN\",\"etc.com\"");
   
   delay(2000);
   toSerial();
