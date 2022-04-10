@@ -120,9 +120,12 @@ int systemStart = 0;
 
 //turns on gsm
 int turnOnGSM(){
+    lcd.clear();
+   lcd.setCursor(1,1);
+   lcd.print("Initializing GSM...");
    digitalWrite(GSMONOFF, HIGH);
    Serial.println("gsm is on");
-   delay(60000);
+   
 }
 
 //turns off gsm
@@ -355,9 +358,9 @@ void loop(){
   if(startSending == 1){
     turnOnGSM();
     //gsm setup just incase it has failed to do so
-    lcd.clear();
-    lcd.setCursor(1,1);
-    lcd.print("Initializing GSM...");
+    //lcd.clear();
+    //lcd.setCursor(1,1);
+    //lcd.print("Initializing GSM...");
   
     gsmSetup();
     lcd.clear();  
@@ -595,6 +598,11 @@ void toSerial()
     bufferGSM[posGSM++] = b;
     if(b == '^'){
       //if sent is success delete the file from sd card
+      if(initialSendTestFlag == 1){
+        lcd.clear();
+        lcd.setCursor(1,1);
+        lcd.print("initial send successful...");
+      }
       deleteFromSdCard();
 
       //subtract from the numer of files
@@ -619,7 +627,7 @@ void initialSendTest(){
   turnOnGSM();
   lcd.clear();
   lcd.setCursor(1,1);
-  lcd.print("Initializing GSM...");
+  lcd.print("initial send test.");
   
   //gsm_setup
   gsmSetup();
@@ -730,4 +738,5 @@ int gsmSetup(){
    
    delay(2000); 
    toSerial();
+   delay(60000);
 }
