@@ -20,6 +20,9 @@ int initialSendTestFlag = 1;
 DS3231 clock;
 RTCDateTime dt;
 
+char longFile[9] = "long.TXT"; 
+char latFile[8] = "lat.TXT"; 
+
 char url[200];
 char data[100];
 
@@ -182,6 +185,9 @@ int printGetLatInfo(){
 
 //this function takes in values from user to save it in longitude variable
 int getLong(){
+
+
+  
   //print get long info for user
   printGetLongInfo();
   char key;
@@ -202,6 +208,8 @@ int getLong(){
       for(int i = 0; i < longIndex; i++){
         longitude[i] = longBuf[i];
       }
+      //write longitude to file
+      writeLongLat(longFile, longitude);
       break;
     }
 
@@ -241,6 +249,8 @@ int getLat(){
       for(int i = 0; i < latIndex; i++){
         latitude[i] = latBuf[i];
       }
+      //write latitude to file
+      writeLongLat(latFile, latitude);
       break;
     }
     
@@ -450,6 +460,63 @@ int printLCDessentials(){
     lcd.print("reed :");
     lcd.setCursor(0,3);
     lcd.print("memory :");
+}
+
+int writeLongLat(char* fileName, char* data){
+  //remove the file if it exists
+  SD.remove(fileName);
+  
+  File longLatFile = SD.open(fileName, FILE_WRITE);//first argument is filename
+    if(longLatFile){
+      longLatFile.print(data);
+    }
+}
+
+bool detectLongLat(char* longFileName, char* latFileName){
+  File longFile, latFile;
+  longFile = SD.open(longFileName);
+  latFile = SD.open(latFileName);
+  return (longFile && latFile);
+}
+
+int readLongLat(char* longFileName, char* latFileName){
+  //reset position
+  byte posi = 0;
+  
+  //declair long and lat file
+  File longFile, latFile;
+
+  //open longFile
+  longFile = SD.open(longFileName);
+
+  //if longFile exists read it and save the value in longitude
+  if (longFile) {
+   
+    // read from the file until there's nothing else in it:
+    while (longFile.available() && posi < 35) {
+      longitude[posi++] = longFile.read();
+    }
+    // close the file:
+    longFile.close();
+  }
+
+  //reset position
+  posi = 0;
+  
+  //open latFile
+  latFile = SD.open(latFileName);
+
+  //if latFile exists read it and save the value in latitude
+  if (latFile) {
+   
+    // read from the file until there's nothing else in it:
+    while (latFile.available() && posi < 35) {
+      latitude[posi++] = latFile.read();
+    }
+    // close the file:
+    latFile.close();
+  }
+  
 }
 
 int writeToSdCard() {
