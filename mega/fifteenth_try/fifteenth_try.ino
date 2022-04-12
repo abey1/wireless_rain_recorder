@@ -187,7 +187,7 @@ int getLong(){
   char key;
   int contWithCurrent = 1;
   if(detectLongLat(longFile)){
-    readLongLat(longFile, longitude);
+    readLong();
     printLongLatFound("long found cont?");
     long now = millis();
     long waitInterval = 20000;
@@ -251,7 +251,7 @@ int getLat(){
   char key;
   int contWithCurrent = 1;
   if(detectLongLat(latFile)){
-    readLongLat(latFile, latitude);
+    readLat();
     printLongLatFound("lat found cont?");
     long now = millis();
     long waitInterval = 20000;
@@ -528,7 +528,7 @@ int detectLongLat(char* fileName){
   }
 }
 
-int readLongLat(char* fileName, char* var){
+int readLong(){
   //reset position
   byte posi = 0;
   
@@ -536,19 +536,40 @@ int readLongLat(char* fileName, char* var){
   File file;
 
   //open longFile
-  file = SD.open(fileName);
+  file = SD.open(longFile);
 
   //if longFile exists read it and save the value in longitude
   if (file) {
     // read from the file until there's nothing else in it:
     while (file.available() && posi < 35) {
-      var[posi++] = file.read();
+      longitude[posi++] = file.read();
     }
     // close the file:
     file.close();
   }
-  Serial.println("found in file----------");
-  Serial.println(var); 
+  longDisplayIndex = posi;
+}
+
+int readLat(){
+  //reset position
+  byte posi = 0;
+  
+  //declair long and lat file
+  File file;
+
+  //open longFile
+  file = SD.open(latFile);
+
+  //if longFile exists read it and save the value in longitude
+  if (file) {
+    // read from the file until there's nothing else in it:
+    while (file.available() && posi < 35) {
+      latitude[posi++] = file.read();
+    }
+    // close the file:
+    file.close();
+  }
+  latDisplayIndex = posi;
 }
 
 int writeToSdCard() {
@@ -625,7 +646,6 @@ int readFromSdCard(){
     // read from the file until there's nothing else in it:
     while (nextFile.available() && pos < 35) {
       //Serial.write(nextFile.read());
-      
       buffer[pos++] = nextFile.read();
     }
 
