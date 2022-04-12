@@ -15,11 +15,10 @@ int initialSendTestFlag = 1;
 #include <SPI.h>
 #include <SD.h>
 
+#define GSMONOFF 10
+
 DS3231 clock;
 RTCDateTime dt;
-
-char longFile[9] = "long.TXT"; 
-char latFile[8] = "lat.TXT"; 
 
 char url[200];
 char data[100];
@@ -119,6 +118,22 @@ int startSending = 0;
 //system start flag
 int systemStart = 0;
 
+//turns on gsm
+int turnOnGSM(){
+    lcd.clear();
+   lcd.setCursor(1,1);
+   lcd.print("Initializing GSM...");
+   digitalWrite(GSMONOFF, HIGH);
+   Serial.println("gsm is on");
+   
+}
+
+//turns off gsm
+int turnOffGSM(){
+   digitalWrite(GSMONOFF, LOW);
+   Serial.println("gsm is off");
+}
+
 //reset buffer everytime before reading
 void resetBuffer() {
   memset(buffer, 0, sizeof(buffer));
@@ -165,149 +180,86 @@ int printGetLatInfo(){
   lcd.setCursor(cc,cr);
 }
 
-int printLongLatFound(char* message){
-  cc = 0; //current cursor column
-  cr = 0; //current cursor row
-  lcd.clear();
-  lcd.setCursor(cc, cr);
-  lcd.print(message);
-  lcd.setCursor(cc, cr+1);
-  lcd.print("C : yes, B : no");
-}
-
-int printCountDown(int val){
-  cc = 2;
-  cr = 2;
-  lcd.setCursor(cc, cr);
-  lcd.print(val);
-}
-
 //this function takes in values from user to save it in longitude variable
 int getLong(){
+  //print get long info for user
+  printGetLongInfo();
   char key;
-  int contWithCurrent = 1;
-  if(detectLongLat(longFile)){
-    readLongLat(longFile, longitude);
-    printLongLatFound("long found cont?");
-    long now = millis();
-    long waitInterval = 20000;
-    int val = 6;
-    do{
-      key = keypad.getKey();
-       if(key && key=='B'){
-          contWithCurrent = 0;
-          break;
-       }
-       if(key && key=='C'){
-          break;
-       }
-    }while(millis() - now < waitInterval);
-  }
+  longIndex = 0;
+  do{
+    key = keypad.getKey();
 
-  if(contWithCurrent == 0){
-    //print get long info for user
-    printGetLongInfo();
-    
-    longIndex = 0;
-    do{
-      key = keypad.getKey();
-  
-      //if user is mistaken this will clear user input
-      if(key && key=='C'){
-        longIndex=0;
-        longDisplayIndex=0;
-        printGetLongInfo();
-      }
-  
-      //save buffered value to permanent buffer
-      if(key && key == '#'){
-        //sizeof(longBuf)/sizeof(longBuf[0])
-        for(int i = 0; i < longIndex; i++){
-          longitude[i] = longBuf[i];
-        }
-        //write longitude to file
-        writeLong(longFile);
-        break;
-      }
-  
-      //this function will save the input to buffer
-      if(key && key != '*' && key != 'C'){
-        lcd.print(key);
-        longBuf[longIndex] = key;
-        longIndex++;
-        cc++;
-        lcd.setCursor(cc,cr);  
-      }
-    }while(key != '*');
-  
-    //if the longIndex is not zero then assign the value to longDisaplayIndex for display purposes
-    if(longIndex != 0){
-        longDisplayIndex = longIndex;
+    //if user is mistaken this will clear user input
+    if(key && key=='C'){
+      longIndex=0;
+      longDisplayIndex=0;
+      printGetLongInfo();
     }
+
+    //save buffered value to permanent buffer
+    if(key && key == '#'){
+      //sizeof(longBuf)/sizeof(longBuf[0])
+      for(int i = 0; i < longIndex; i++){
+        longitude[i] = longBuf[i];
+      }
+      break;
+    }
+
+    //this function will save the input to buffer
+    if(key && key != '*' && key != 'C'){
+      lcd.print(key);
+      longBuf[longIndex] = key;
+      longIndex++;
+      cc++;
+      lcd.setCursor(cc,cr);  
+    }
+  }while(key != '*');
+
+  //if the longIndex is not zero then assign the value to longDisaplayIndex for display purposes
+  if(longIndex != 0){
+      longDisplayIndex = longIndex;
   }
 }
 
 int getLat(){
+  //print get lat info for user
+  printGetLatInfo();
   char key;
-  int contWithCurrent = 1;
-  if(detectLongLat(latFile)){
-    readLongLat(latFile, latitude);
-    printLongLatFound("lat found cont?");
-    long now = millis();
-    long waitInterval = 20000;
-    int val = 6;
-    do{
-      key = keypad.getKey();
-       if(key && key=='B'){
-          contWithCurrent = 0;
-          break;
-       }
-       if(key && key=='C'){
-          break;
-       }
-    }while(millis() - now < waitInterval);
-  }
+  latIndex = 0;
+  do{
+    key = keypad.getKey();
 
-  if(contWithCurrent == 0){
-    //print get lat info for user
-    printGetLatInfo();
-    latIndex = 0;
-    do{
-      key = keypad.getKey();
-  
-      //clear
-      if(key && key=='C'){
-        latIndex=0;
-        latDisplayIndex=0;
-        printGetLatInfo();
-      }
-  
-      //save buffered value to permanent buffer
-      if(key && key == '#'){
-        for(int i = 0; i < latIndex; i++){
-          latitude[i] = latBuf[i];
-        }
-        //write latitude to file
-        writeLat(latFile);
-        break;
-      }
-      
-      if(key && key != '*' && key != 'C'){
-        lcd.print(key);
-        latBuf[latIndex] = key;
-        latIndex++;
-        cc++;
-        lcd.setCursor(cc,cr);  
-      }
-    }while(key != '*');
-  
-    if(latIndex != 0){
-        latDisplayIndex = latIndex;
+    //clear
+    if(key && key=='C'){
+      latIndex=0;
+      latDisplayIndex=0;
+      printGetLatInfo();
     }
+
+    //save buffered value to permanent buffer
+    if(key && key == '#'){
+      for(int i = 0; i < latIndex; i++){
+        latitude[i] = latBuf[i];
+      }
+      break;
+    }
+    
+    if(key && key != '*' && key != 'C'){
+      lcd.print(key);
+      latBuf[latIndex] = key;
+      latIndex++;
+      cc++;
+      lcd.setCursor(cc,cr);  
+    }
+  }while(key != '*');
+
+  if(latIndex != 0){
+      latDisplayIndex = latIndex;
   }
 }
 
 void setup(){
+  pinMode(GSMONOFF, OUTPUT);
   // initialize the lcd
   lcd.begin(); 
   lcd.backlight();
@@ -354,9 +306,9 @@ void setup(){
 
 void loop(){
 
-//  if(initialSendTestFlag == 1){
-//    initialSendTest();
-//  }
+  if(initialSendTestFlag == 1){
+    initialSendTest();
+  }
   
   //get key from user to setup values for longitude and latitude
   resetKey = keypad.getKey();
@@ -404,6 +356,11 @@ void loop(){
   }
 
   if(startSending == 1){
+    turnOnGSM();
+    //gsm setup just incase it has failed to do so
+    //lcd.clear();
+    //lcd.setCursor(1,1);
+    //lcd.print("Initializing GSM...");
   
     gsmSetup();
     lcd.clear();  
@@ -438,6 +395,7 @@ void loop(){
 
     //print the issentials
     printLCDessentials();
+    turnOffGSM();
   }
   
   // Format the time and date and insert into the temporary buffer.
@@ -494,61 +452,6 @@ int printLCDessentials(){
     lcd.print("reed :");
     lcd.setCursor(0,3);
     lcd.print("memory :");
-}
-
-int writeLong(char* fileName){
-  //remove the file if it exists
-  SD.remove(fileName);
-  
-  File longLatFile = SD.open(fileName, FILE_WRITE);//first argument is filename
-    if(longLatFile){
-      longLatFile.print(longitude);
-      longLatFile.close();
-    }
-}
-
-int writeLat(char* fileName){
-  //remove the file if it exists
-  SD.remove(fileName);
-  
-  File longLatFile = SD.open(fileName, FILE_WRITE);//first argument is filename
-    if(longLatFile){
-      longLatFile.print(latitude);
-      longLatFile.close();
-    }
-}
-
-int detectLongLat(char* fileName){
-  File file;
-  file = SD.open(fileName);
-  if(file){
-    return 1;
-  }else{
-    return 0;
-  }
-}
-
-int readLongLat(char* fileName, char* var){
-  //reset position
-  byte posi = 0;
-  
-  //declair long and lat file
-  File file;
-
-  //open longFile
-  file = SD.open(fileName);
-
-  //if longFile exists read it and save the value in longitude
-  if (file) {
-    // read from the file until there's nothing else in it:
-    while (file.available() && posi < 35) {
-      var[posi++] = file.read();
-    }
-    // close the file:
-    file.close();
-  }
-  Serial.println("found in file----------");
-  Serial.println(var); 
 }
 
 int writeToSdCard() {
@@ -725,6 +628,7 @@ void toSerial()
 }
 
 void initialSendTest(){
+  turnOnGSM();
   lcd.clear();
   lcd.setCursor(1,1);
   lcd.print("initial send test.");
@@ -771,72 +675,75 @@ void initialSendTest(){
    delay(10000);
 
    initialSendTestFlag = 0;
+   turnOffGSM();
 }
 
 int gsmSetup(){
-  delay(30000);
-  mySerial.begin(19200);
-  Serial.begin(19200);
-
-  lcd.clear();
-  Serial.println("Config SIM900...");
-  lcd.print("Config SIM900...");
+    delay(30000);
+    mySerial.begin(19200);
+    Serial.begin(19200);
   
-  delay(2000);
-  lcd.clear();
-  Serial.println("Done!...");
-  lcd.print("Done!...");
+    lcd.clear();
+    Serial.println("Config SIM900...");
+    lcd.print("Config SIM900...");
+    
+    delay(2000);
+    lcd.clear();
+    Serial.println("Done!...");
+    lcd.print("Done!...");
+    
+    mySerial.flush();
+    Serial.flush();
   
-  mySerial.flush();
-  Serial.flush();
-
-  // attach or detach from GPRS service 
-  lcd.clear();
-  mySerial.println("AT+CGATT?");
-  lcd.print("AT+CGATT?");
+    // attach or detach from GPRS service 
+    lcd.clear();
+    mySerial.println("AT+CGATT?");
+    lcd.print("AT+CGATT?");
+    
+    delay(100);
+    toSerial();
   
-  delay(100);
-  toSerial();
-
-  // bearer settings
-  lcd.clear();
-  mySerial.println("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
-  lcd.print("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
+    // bearer settings
+    lcd.clear();
+    mySerial.println("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
+    lcd.print("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
+    
+    delay(2000);
+    toSerial();
   
-  delay(2000);
-  toSerial();
-
-  // bearer settings
-  lcd.clear();
-  mySerial.println("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
-  lcd.print("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
+    // bearer settings
+    lcd.clear();
+    mySerial.println("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
+    lcd.print("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
+    
+    delay(2000);
+    toSerial();
+    delay(2000);
   
-  delay(2000);
-  toSerial();
-  delay(2000);
-
-  // bearer settings
-  lcd.clear();
-  mySerial.println("AT+SAPBR=1,1");
-  lcd.print("AT+SAPBR=1,1");
+    // bearer settings
+    lcd.clear();
+    mySerial.println("AT+SAPBR=1,1");
+    lcd.print("AT+SAPBR=1,1");
+    
+    delay(2000);
+    toSerial();
   
-  delay(2000);
-  toSerial();
-
-  // bearer settings
-  lcd.clear();
-  mySerial.println("AT+SAPBR=2,1");
-  lcd.print("AT+SAPBR=2,1");
+    // bearer settings
+    lcd.clear();
+    mySerial.println("AT+SAPBR=2,1");
+    lcd.print("AT+SAPBR=2,1");
+    
+    delay(2000);
+    toSerial();
   
-  delay(2000);
-  toSerial();
-
-   // initialize http service
-   lcd.clear();
-   mySerial.println("AT+HTTPINIT");
-   lcd.print("AT+HTTPINIT");
-   
-   delay(2000); 
-   toSerial();
-   delay(5000);
+     // initialize http service
+     lcd.clear();
+     mySerial.println("AT+HTTPINIT");
+     lcd.print("AT+HTTPINIT");
+     
+     delay(2000); 
+     toSerial();
+     delay(5000);
+  
+  
 }

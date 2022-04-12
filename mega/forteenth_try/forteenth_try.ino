@@ -123,14 +123,14 @@ int turnOnGSM(){
     lcd.clear();
    lcd.setCursor(1,1);
    lcd.print("Initializing GSM...");
-   digitalWrite(GSMONOFF, LOW);
+   digitalWrite(GSMONOFF, HIGH);
    Serial.println("gsm is on");
    
 }
 
 //turns off gsm
 int turnOffGSM(){
-   digitalWrite(GSMONOFF, HIGH);
+   digitalWrite(GSMONOFF, LOW);
    Serial.println("gsm is off");
 }
 
@@ -260,7 +260,6 @@ int getLat(){
 
 void setup(){
   pinMode(GSMONOFF, OUTPUT);
-  digitalWrite(GSMONOFF, HIGH);
   // initialize the lcd
   lcd.begin(); 
   lcd.backlight();
@@ -677,7 +676,7 @@ void initialSendTest(){
 }
 
 int gsmSetup(){
-  delay(120000);
+  delay(30000);
   mySerial.begin(19200);
   Serial.begin(19200);
 
