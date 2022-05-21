@@ -24,7 +24,7 @@ char latFile[8] = "lat.TXT";
 char url[200];
 char data[100];
 
-char buffer[80];
+char buffer[2000];
 byte pos = 0;
 
 char bufferGSM[80];
@@ -94,6 +94,12 @@ int oldNoOfFile = 1;
 
 //number of files in SD card to be written
 int noOfFile = 1;
+
+//this variable is set by readFromSdCard function
+//to set up to what file it reads for sending
+int upToNoOfFile = 1;
+
+
 
 //number of files history
 int noOfFileHistory = 1;
@@ -419,11 +425,13 @@ void loop(){
      buttonPushCounter++;
      //save to file
      writeToSdCard('1');
-     delay(500);
+     delay(5);
      //reset default saver
      previousMillisSd = millis();
      //subtract one from no-rain counter
-     noRainCounter--;
+     if(noRainCounter > 0){
+      noRainCounter--;
+     }
      //add one to the number of files
      noOfFile++;
      
@@ -473,20 +481,21 @@ void loop(){
   if(startSending == 1){
   
     gsmSetup();
+    delay(500);
     lcd.clear();  
     lcd.backlight();
     //initialize send attempt
     int sendAttempt = 3;
     
-    while(noOfFile != 0 && startSending == 1){
+    while(noOfFile != 1 && startSending == 1){
       //save oldNoOfFile as noOfFile in each loop
       oldNoOfFile = noOfFile;
       readFromSdCard();
       sendToServer();
       lcd.setCursor(9,3);
-      lcd.print("           ");
+      //lcd.print("    ");
       lcd.setCursor(9,3);
-      lcd.print(sNoOfFile);
+      //lcd.print(noOfFile);
       //if the last file is not sent
       if(oldNoOfFile == noOfFile){
         sendAttempt--;
@@ -627,13 +636,13 @@ int writeToSdCard(char amount){
   if(nextFile){
       Serial.println(timeBuf);
       nextFile.print(timeBuf);
-      nextFile.print("<->");
-      nextFile.print(longitude);
-      nextFile.print("<->");
-      nextFile.print(latitude);
-      nextFile.print("<->");
+      nextFile.print("|");
+//      nextFile.print(longitude);
+//      nextFile.print("<->");
+//      nextFile.print(latitude);
+//      nextFile.print("<->");
       nextFile.print(amount);
-      nextFile.print("##");
+      nextFile.print(",");
       nextFile.close();
   }
   lcd.setCursor(9,3);
@@ -700,31 +709,87 @@ int writeToSdCard(char amount){
 
 int readFromSdCard(){
 
+  //setting upToNoOfFile
+  //if noOfFile is greater than 50
+  //set upToNoOfFile 50 less than noOfFile
+  //because that is the limit to be sent
+
   //reset buffer
   resetBuffer();
-  
-  itoa(noOfFile,sNoOfFile,10);
-  strcat(sNoOfFile, ".TXT");
-  // re-open the file for reading:
-  //sNoOfFile is used here because it is concatinated to .txt file before in write
-  nextFile = SD.open(sNoOfFile);
-  Serial.println(sNoOfFile);
-  if (nextFile) {
-   
-    // read from the file until there's nothing else in it:
-    while (nextFile.available() && pos < 35) {
-      //Serial.write(nextFile.read());
-      buffer[pos++] = nextFile.read();
-    }
+  //---------------------------------------------------------------------
+  //----------------read longitude and latitude first--------------------
+  //---------------------------------------------------------------------
 
-    Serial.write("--------------->");
-    Serial.write(buffer);
-    
-    // close the file:
+  //read long file
+  nextFile = SD.open(longFile);
+  if(nextFile){
+    while (nextFile.available()) {
+        //Serial.write(nextFile.read());
+        buffer[pos++] = nextFile.read();
+    }
+    buffer[pos++] = ',';
     nextFile.close();
-  } else {
-    // if the file didn't open, print an error:
-    Serial.println("error opening file from read");
+  }
+  //read lat file
+  nextFile = SD.open(latFile);
+  if(nextFile){
+    while (nextFile.available()) {
+        //Serial.write(nextFile.read());
+        buffer[pos++] = nextFile.read();
+    }
+    buffer[pos++] = ',';
+    nextFile.close();
+  }
+
+  //---------------------------------------------------------------------
+  //----------------read longitude and latitude first--------------------
+  //---------------------------------------------------------------------
+  int range;
+  
+  if(noOfFile > 10)
+    range = 10;
+  else
+    range = noOfFile;
+    
+  int limit = noOfFile - range;
+  for(upToNoOfFile = noOfFile; upToNoOfFile > limit; upToNoOfFile--){
+    itoa(upToNoOfFile,sNoOfFile,10);
+    strcat(sNoOfFile, ".TXT");
+    // re-open the file for reading:
+    //sNoOfFile is used here because it is concatinated to .txt file before in write
+    nextFile = SD.open(sNoOfFile);
+    Serial.println(sNoOfFile);
+    if (nextFile) {
+     
+      // read from the file until there's nothing else in it:
+      while (nextFile.available()) {
+        //Serial.write(nextFile.read());
+        buffer[pos++] = nextFile.read();
+      }
+      // close the file:
+      nextFile.close();
+//      if(pos >= 2000)
+//        break;
+    } else {
+      // if the file didn't open, print an error:
+      Serial.println("error opening file from read");
+    }
+  }
+  Serial.write("--------------->");
+  Serial.write(buffer);
+  lcd.write(sNoOfFile);
+}
+
+int deleteFromSdCardByInterval(){
+  Serial.print("upToNoOfFile = ");
+  Serial.print(upToNoOfFile);
+  for(int tempNoOfFile = upToNoOfFile+1; tempNoOfFile <= noOfFile; tempNoOfFile++){
+    
+    itoa(tempNoOfFile,sNoOfFile,10);
+    strcat(sNoOfFile, ".TXT");
+    Serial.print("deleting");
+    Serial.println(sNoOfFile);
+    SD.remove(sNoOfFile);
   }
 }
 
@@ -750,7 +815,7 @@ void sendToServer(){
 
    sprintf(data,"kebede");
    //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
-   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data.php?data=%s\"",buffer);
+   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data4.php?data=%s\"",buffer);
    mySerial.println(url);
    //mySerial.println("AT+HTTPPARA=\"URL\",\"https://www.nrwlpms.com/sim900/get_data.php?pre=%222022-02-18%202014:33:38%3C-%3E0%22\"");
 
@@ -773,8 +838,8 @@ void sendToServer(){
    toSerial();
    delay(300);
 
-   mySerial.println("");
-   delay(10000);
+//   mySerial.println("");
+//   delay(10000);
 }
 
 void toSerial()
@@ -786,16 +851,16 @@ void toSerial()
     byte b = mySerial.read();
     bufferGSM[posGSM++] = b;
     if(b == '^'){
-      //if sent is success delete the file from sd card
-      if(initialSendTestFlag == 1){
-        lcd.clear();
-        lcd.setCursor(1,1);
-        lcd.print("initial send successful...");
+      
+      deleteFromSdCardByInterval();
+   
+      //reset noOfFile
+      if(upToNoOfFile == 0){
+        noOfFile = 1;
+      }else{
+        noOfFile = upToNoOfFile;
       }
-      deleteFromSdCard();
-
-      //subtract from the numer of files
-      noOfFile--;
+      
     }
     if(b == '@'){
       //if fail make send flag to be 0 and stop sending all togather 
@@ -832,7 +897,7 @@ void initialSendTest(){
 
    sprintf(data,"kebede");
    //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
-   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data.php?data=%s\"","0000-00-00_00:00:00<->0<->0<->0<->");
+   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data2.php?data=%s\"","0000-00-00_00:00:00<->0<->0<->0<->");
    mySerial.println(url);
    //mySerial.println("AT+HTTPPARA=\"URL\",\"https://www.nrwlpms.com/sim900/get_data.php?pre=%222022-02-18%202014:33:38%3C-%3E0%22\"");
 
@@ -855,8 +920,8 @@ void initialSendTest(){
    toSerial();
    delay(300);
 
-   mySerial.println("");
-   delay(10000);
+//   mySerial.println("");
+//   delay(10000);
 
    initialSendTestFlag = 0;
 }
