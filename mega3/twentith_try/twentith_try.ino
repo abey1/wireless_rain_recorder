@@ -1,0 +1,1070 @@
+#include <SoftwareSerial.h> //software serial library for serial communication b/w arduino & mySerial
+
+SoftwareSerial mySerial(12, 13);//connect Tx pin of mySerial to pin 8 of arduino && Rx pin of mySerial to pin no 9 of arduino
+
+#include <Keypad.h>
+#include <LiquidCrystal_I2C.h>
+
+int initialSendTestFlag = 1;
+
+//import for clock
+#include <Wire.h>
+#include <DS3231.h>
+
+//import for sdcard
+#include <SPI.h>
+#include <SD.h>
+
+DS3231 clock;
+RTCDateTime dt;
+
+char longFile[9] = "long.TXT"; 
+char latFile[8] = "lat.TXT"; 
+
+char url[200];
+char data[100];
+
+char buffer[2000];
+byte pos = 0;
+
+char bufferGSM[80];
+byte posGSM = 0;
+
+const int  buttonPin = 2;    // the pin that the reedswitch is attached to
+int buttonPushCounter = 0; // counter for the number of times reed switch detects magnet presses
+int buttonPushCounterHistory = 0;
+int buttonState = 0;         // current state of the reed switch
+
+const int ROW_NUM    = 4; // four rows
+const int COLUMN_NUM = 4; // four columns
+
+char keys[ROW_NUM][COLUMN_NUM] = {
+  {'1','2','3', '.'},
+  {'4','5','6', 'B'},
+  {'7','8','9', 'C'},
+  {'*','0','#', 'D'}
+};
+
+byte pin_rows[ROW_NUM] = {9, 8, 7, 6};      // connect to the row pinouts of the keypad
+byte pin_column[COLUMN_NUM] = {5, 4, 3, 2}; // connect to the column pinouts of the keypad
+
+
+Keypad keypad = Keypad(makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM );
+LiquidCrystal_I2C lcd(0x27, 20, 4); // I2C address 0x27, 20 column and 4 rows
+
+int cursorColumn = 0;
+
+//buffers to hold and save user input for longitude and latitude
+char longBuf[20];
+char latBuf[20];
+
+//this two variables holds and displays logitude and latitude
+char longitude[20];
+char latitude[20];
+
+//this key is used to take in input from keypad to reset and brightn the lcd
+//'D' to brightn lcd and 'B' to go back and reset are set 
+char resetKey;
+
+//previous millis is used to hold and save millis() to kim the lcd
+long previousMillisLCD; //for backlight dim
+long previousMillisSd; //to display seconds on lcd
+//the interval for the lcd to stay showing light after user pressed 'D'
+long intervalLCD = 60000;
+long intervalSd = 5000;
+
+//longIndex and latIndex are used to trace when user inputs value for longitude and latitude
+//longDisplayIndex and latDisplayIndex are used to display latitude and longitude to lcd
+int longIndex;
+int longDisplayIndex;
+int latIndex;
+int latDisplayIndex;
+
+
+int cc; //current cursor column
+int cr; //current cursor row
+
+//pin number on mega to access sd card
+const int chipSelect = 53;
+
+//next file to write reed switch data
+File nextFile;
+
+int oldNoOfFile = 1;
+
+//number of files in SD card to be written
+int noOfFile = 1;
+
+//this variable is set by readFromSdCard function
+//to set up to what file it reads for sending
+int upToNoOfFile = 1;
+
+
+
+//number of files history
+int noOfFileHistory = 1;
+
+//send attempt counter
+int sendAttempt = 0;
+
+//number of files counter to be sent through GSM module
+int noOfFileGSM = 1;
+
+//variable to hold noOfFile changed to string
+char sNoOfFile[10];
+
+//timebuf to hold current time
+char timeBuf[50];
+
+//
+int noRainCounter = 0;
+
+//
+int startSending = 0;
+
+//system start flag
+int systemStart = 0;
+
+//pin to start relay switch
+const int RELAY_PIN = 48;
+
+//reset buffer everytime before reading
+void resetBuffer() {
+  memset(buffer, 0, sizeof(buffer));
+  pos = 0;
+}
+
+//reset bufferGSM before reading
+void resetBufferGSM() {
+  memset(bufferGSM, 0, sizeof(bufferGSM));
+  posGSM = 0;
+}
+
+//this function displays information to input logitude value for user
+int printGetLongInfo(){
+  cc = 0; //current cursor column
+  cr = 0; //current cursor row
+  lcd.clear();
+  lcd.setCursor(cc,cr);
+  lcd.print("A='.', esc='*'");
+  cr++;
+  lcd.setCursor(cc,cr);
+  lcd.print("clr='C', save='#'");
+  cr++;
+  lcd.setCursor(cc,cr);
+  lcd.print("Long : ");
+  cc = cc + 7;
+  lcd.setCursor(cc,cr);
+}
+
+//this function displays information to input latitude value for user
+int printGetLatInfo(){
+  cc = 0; //current cursor column
+  cr = 0; //current cursor row
+  lcd.clear();
+  lcd.setCursor(cc,cr);
+  lcd.print("A='.', esc='*'");
+  cr++;
+  lcd.setCursor(cc,cr);
+  lcd.print("clr='C', save='#'");
+  cr++;
+  lcd.setCursor(cc,cr);
+  lcd.print("Lat : ");
+  cc = cc + 6;
+  lcd.setCursor(cc,cr);
+}
+
+int printLongLatFound(char* message){
+  cc = 0; //current cursor column
+  cr = 0; //current cursor row
+  lcd.clear();
+  lcd.setCursor(cc, cr);
+  lcd.print(message);
+  lcd.setCursor(cc, cr+1);
+  lcd.print("C : yes, B : no");
+}
+
+int printLoadingFile(char* message){
+  cc = 0; //current cursor column
+  cr = 0; //current cursor row
+  lcd.clear();
+  lcd.setCursor(cc, cr);
+  lcd.print(message);
+}
+
+int printMemoryResetMessage(char* message){
+  cc = 0; //current cursor column
+  cr = 0; //current cursor row
+  lcd.clear();
+  lcd.setCursor(cc, cr);
+  lcd.print(message);
+  lcd.setCursor(cc, cr+1);
+  lcd.print("C : No, B : Yes");
+}
+
+int printCountDown(int val){
+  cc = 2;
+  cr = 2;
+  lcd.setCursor(cc, cr);
+  lcd.print(val);
+}
+
+int resetMemory(){
+  char key;
+  int contWithCurrent = 1;
+  printMemoryResetMessage("Format Memory?");
+  long now = millis();
+  long waitInterval = 20000;
+  //wait user input for 20 seconds
+  do{
+    key = keypad.getKey();
+       if(key && key=='B'){
+          contWithCurrent = 0;
+          break;
+       }
+       if(key && key=='C'){
+          break;
+       }
+  }while(millis() - now < waitInterval);
+
+  if(contWithCurrent == 0){
+    formatMemory();
+  }
+}
+
+
+//this function takes in values from user to save it in longitude variable
+int getLong(){
+  char key;
+  int contWithCurrent = 1;
+  if(detectLongLat(longFile)){
+    readLong();
+    printLongLatFound("long found cont?");
+    long now = millis();
+    long waitInterval = 20000;
+    int val = 6;
+    do{
+      key = keypad.getKey();
+       if(key && key=='B'){
+          contWithCurrent = 0;
+          break;
+       }
+       if(key && key=='C'){
+          break;
+       }
+    }while(millis() - now < waitInterval);
+  }else{
+    contWithCurrent = 0;
+  }
+
+  if(contWithCurrent == 0){
+    //print get long info for user
+    printGetLongInfo();
+    
+    longIndex = 0;
+    do{
+      key = keypad.getKey();
+  
+      //if user is mistaken this will clear user input
+      if(key && key=='C'){
+        longIndex=0;
+        longDisplayIndex=0;
+        printGetLongInfo();
+      }
+  
+      //save buffered value to permanent buffer
+      if(key && key == '#'){
+        //sizeof(longBuf)/sizeof(longBuf[0])
+        for(int i = 0; i < longIndex; i++){
+          longitude[i] = longBuf[i];
+        }
+        //write longitude to file
+        writeLong(longFile);
+        break;
+      }
+  
+      //this function will save the input to buffer
+      if(key && key != '*' && key != 'C'){
+        lcd.print(key);
+        longBuf[longIndex] = key;
+        longIndex++;
+        cc++;
+        lcd.setCursor(cc,cr);  
+      }
+    }while(key != '*');
+  
+    //if the longIndex is not zero then assign the value to longDisaplayIndex for display purposes
+    if(longIndex != 0){
+        longDisplayIndex = longIndex;
+    }
+  }
+}
+
+int getLat(){
+  char key;
+  int contWithCurrent = 1;
+  if(detectLongLat(latFile)){
+    readLat();
+    printLongLatFound("lat found cont?");
+    long now = millis();
+    long waitInterval = 20000;
+    int val = 6;
+    do{
+      key = keypad.getKey();
+       if(key && key=='B'){
+          contWithCurrent = 0;
+          break;
+       }
+       if(key && key=='C'){
+          break;
+       }
+    }while(millis() - now < waitInterval);
+  }else{
+    contWithCurrent = 0;
+  }
+
+  if(contWithCurrent == 0){
+    //print get lat info for user
+    printGetLatInfo();
+    latIndex = 0;
+    do{
+      key = keypad.getKey();
+  
+      //clear
+      if(key && key=='C'){
+        latIndex=0;
+        latDisplayIndex=0;
+        printGetLatInfo();
+      }
+  
+      //save buffered value to permanent buffer
+      if(key && key == '#'){
+        for(int i = 0; i < latIndex; i++){
+          latitude[i] = latBuf[i];
+        }
+        //write latitude to file
+        writeLat(latFile);
+        break;
+      }
+      
+      if(key && key != '*' && key != 'C'){
+        lcd.print(key);
+        latBuf[latIndex] = key;
+        latIndex++;
+        cc++;
+        lcd.setCursor(cc,cr);  
+      }
+    }while(key != '*');
+  
+    if(latIndex != 0){
+        latDisplayIndex = latIndex;
+    }
+  }
+}
+
+int getLastNoOfFile(){
+  printLoadingFile("loading file...");
+  //this function will read and continue from old saved noOfFile if power is out
+  int tempNoOfFile = 1;
+  char sTempNoOfFile[10];
+  //a stands for available
+  bool a = false;
+  do{
+    itoa(tempNoOfFile,sTempNoOfFile,10);
+    
+    strcat(sTempNoOfFile, ".TXT");
+    // re-open the file for reading:
+    //sNoOfFile is used here because it is concatinated to .txt file before in write
+    nextFile = SD.open(sTempNoOfFile);
+    if(nextFile){
+      a = true;
+      Serial.print("found");
+      Serial.println(sTempNoOfFile);
+      nextFile.close();
+      tempNoOfFile++;
+      delay(100);
+    }else{
+      a = false;
+    }
+    
+  }while(a);
+  noOfFile = tempNoOfFile;
+}
+
+
+
+void setup(){
+  // initialize the lcd
+  lcd.begin(); 
+  lcd.backlight();
+
+  //lcd.setCursor(1,1);
+  //lcd.print("Initializing GSM...");
+  
+  //gsm_setup
+  //gsmSetup();
+  //gsm_setup
+
+  //set relay pin as output
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, HIGH);
+  
+  //begin clock
+  clock.begin();
+
+  //initialize Serial for debuging purposes
+  Serial.begin(19200);
+  mySerial.begin(19200);
+  // uncomment this to assign compiling date and time
+  // Set sketch compiling time
+  //clock.setDateTime(__DATE__, __TIME__);
+  
+  //initialize sd card
+  if(!SD.begin(chipSelect)){
+    Serial.println("initialization failed. Things to check:");
+    Serial.println("1. is a card inserted?");
+    Serial.println("2. is your wiring correct?");
+    Serial.println("3. did you change the chipSelect pin to match your shield or module?");
+    Serial.println("Note: press reset or reopen this Serial Monitor after fixing your issue!");
+    while (true);
+  }
+  
+
+  getLong();
+  getLat();
+
+  //assign previousMillisLCD current time
+  previousMillisLCD = millis(); 
+  //assign previousMillisSd current time
+  previousMillisSd = millis();
+  getLastNoOfFile();
+  resetMemory();
+  lcd.clear();
+  printLCDessentials();
+}
+
+void loop(){
+
+//  if(initialSendTestFlag == 1){
+//    initialSendTest();
+//  }
+  
+  //get key from user to setup values for longitude and latitude
+  resetKey = keypad.getKey();
+
+  //get date and time from clock
+  dt = clock.getDateTime();
+
+  //if user put 'B' as input go to setup()
+  if(resetKey == 'B'){
+    setup();
+  }
+
+  //wakeup show lcd
+  if(resetKey == 'D'){
+    lcd.backlight();
+    previousMillisLCD = millis();
+  }
+
+   buttonState = digitalRead(buttonPin);
+
+  //------------------------------------------------------
+  //--------------tipping bucket sender-------------------
+  //------------------------------------------------------
+
+   if (buttonState != HIGH) {
+     buttonPushCounter++;
+     //save to file
+     writeToSdCard('1');
+     delay(5);
+     //reset default saver
+     previousMillisSd = millis();
+     //subtract one from no-rain counter
+     if(noRainCounter > 0){
+      noRainCounter--;
+     }
+     //add one to the number of files
+     noOfFile++;
+     
+     Serial.println("on");
+     Serial.print("number of button pushes: ");
+     Serial.println(buttonPushCounter);
+   }
+
+  //------------------------------------------------------
+  //--------------tipping bucket sender-------------------
+  //------------------------------------------------------
+
+  //dims light of lcd after intervalLCD seconds
+  if(millis() - previousMillisLCD > intervalLCD) {
+    lcd.noBacklight(); 
+  }
+
+  //------------------------------------------------------
+  //------------------default sender----------------------
+  //------------------------------------------------------
+  //periodically saves value of 0 to sdreader if 
+  //no rain appeared for some time
+  if(millis() - previousMillisSd > intervalSd){
+    if(startSending == 0){
+       writeToSdCard('0');
+       //add one to noRainCouter
+       noRainCounter++;
+       //if noRainCounter reaches certain value
+       //start sending
+       if(noRainCounter == 5){
+         //reset noRainCounter to 0
+         noRainCounter = 0;
+         //set flag to start sending to 1 
+         startSending = 1;
+       }else{
+         noOfFile++;
+       }
+    }
+    //reset default sending time
+    previousMillisSd = millis();
+  }
+  //------------------------------------------------------
+  //------------------default sender----------------------
+  //------------------------------------------------------
+
+  
+  if(startSending == 1){
+    
+    //switch on the relay
+    digitalWrite(RELAY_PIN, LOW);
+    Serial.println("relay on");
+    delay(5000);
+    
+    gsmSetup();
+    delay(500);
+    lcd.clear();  
+    lcd.backlight();
+    //initialize send attempt
+    int sendAttempt = 3;
+    
+    while(noOfFile != 1 && startSending == 1){
+      //save oldNoOfFile as noOfFile in each loop
+      oldNoOfFile = noOfFile;
+      readFromSdCard();
+      sendToServer();
+      lcd.setCursor(9,3);
+      //lcd.print("    ");
+      lcd.setCursor(9,3);
+      //lcd.print(noOfFile);
+      //if the last file is not sent
+      if(oldNoOfFile == noOfFile){
+        sendAttempt--;
+        if(sendAttempt > 0){
+          gsmSetup();
+        }
+      }
+      //if three attempts are made and the file is not sent
+      //break the while loop
+      if(sendAttempt == 0){
+        break;
+      }
+    }
+    startSending = 0;
+
+    //switch off the relay
+    digitalWrite(RELAY_PIN, HIGH);
+    
+    lcd.noBacklight();
+
+    //print the issentials
+    printLCDessentials();
+  }
+  
+  // Format the time and date and insert into the temporary buffer.
+  
+  snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d_%02d:%02d:%02d",
+           dt.year, dt.month, dt.day,
+           dt.hour, dt.minute, dt.second);
+
+  //prints clock on first line
+  lcd.setCursor(0,0);
+  lcd.print(timeBuf);
+  lcd.setCursor(7,2);
+  lcd.print(buttonPushCounter);
+  lcd.setCursor(9,3);
+  lcd.print(sNoOfFile);
+
+}
+
+int printLCDessentials(){
+    lcd.clear();
+    lcd.setCursor(0,1);
+    lcd.print("(Lo:");
+    lcd.setCursor(4,1);
+    lcd.print(longitude);
+    lcd.setCursor(4+longDisplayIndex,1);
+    lcd.print(",La:");
+    lcd.print(latitude);
+    lcd.setCursor(4+longDisplayIndex+latDisplayIndex+4,1);
+    lcd.print(")");
+    lcd.setCursor(0,2);
+    lcd.print("reed :");
+    lcd.setCursor(0,3);
+    lcd.print("memory :");
+}
+
+int writeLong(char* fileName){
+  //remove the file if it exists
+  SD.remove(fileName);
+  
+  File longLatFile = SD.open(fileName, FILE_WRITE);//first argument is filename
+    if(longLatFile){
+      longLatFile.print(longitude);
+      longLatFile.close();
+    }
+}
+
+int writeLat(char* fileName){
+  //remove the file if it exists
+  SD.remove(fileName);
+  
+  File longLatFile = SD.open(fileName, FILE_WRITE);//first argument is filename
+    if(longLatFile){
+      longLatFile.print(latitude);
+      longLatFile.close();
+    }
+}
+
+int detectLongLat(char* fileName){
+  File file;
+  file = SD.open(fileName);
+  if(file){
+    return 1;
+  }else{
+    return 0;
+  }
+}
+
+int readLong(){
+  //reset position
+  byte posi = 0;
+  
+  //declair long and lat file
+  File file;
+
+  //open longFile
+  file = SD.open(longFile);
+
+  //if longFile exists read it and save the value in longitude
+  if (file) {
+    // read from the file until there's nothing else in it:
+    while (file.available() && posi < 35) {
+      longitude[posi++] = file.read();
+    }
+    // close the file:
+    file.close();
+  }
+  longDisplayIndex = posi;
+}
+
+int readLat(){
+  //reset position
+  byte posi = 0;
+  
+  //declair long and lat file
+  File file;
+
+  //open longFile
+  file = SD.open(latFile);
+
+  //if longFile exists read it and save the value in longitude
+  if (file) {
+    // read from the file until there's nothing else in it:
+    while (file.available() && posi < 35) {
+      latitude[posi++] = file.read();
+    }
+    // close the file:
+    file.close();
+  }
+  latDisplayIndex = posi;
+}
+
+int writeToSdCard(char amount){
+  if(noOfFile == 0){
+      noOfFile = 1;
+  }
+  itoa(noOfFile,sNoOfFile,10);
+  strcat(sNoOfFile, ".TXT");
+  SD.remove(sNoOfFile);
+  nextFile = SD.open(sNoOfFile, FILE_WRITE);
+  if(nextFile){
+      Serial.println(timeBuf);
+      nextFile.print(timeBuf);
+      nextFile.print("|");
+//      nextFile.print(longitude);
+//      nextFile.print("<->");
+//      nextFile.print(latitude);
+//      nextFile.print("<->");
+      nextFile.print(amount);
+      nextFile.print(",");
+      nextFile.close();
+  }
+  lcd.setCursor(9,3);
+  lcd.print("          ");
+}
+
+//int writeToSdCard() {
+//    //converting noOfFile which tracks number of files in sdcard to string which 
+//    //the string variable is sNoOfFile
+//    if(noOfFile == 0){
+//      noOfFile = 1;
+//    }
+//    //create sNoOfFile by converting to string
+//    itoa(noOfFile,sNoOfFile,10);
+//    //concatinate .TXT behind the file
+//    strcat(sNoOfFile, ".TXT");
+//    //remove the file if it exists
+//    SD.remove(sNoOfFile);
+//    
+//    nextFile = SD.open(sNoOfFile, FILE_WRITE);//first argument is filename
+//    if(nextFile){
+//      Serial.println(timeBuf);
+//      nextFile.print(timeBuf);
+//      nextFile.print("<->");
+//      nextFile.print(longitude);
+//      nextFile.print("<->");
+//      nextFile.print(latitude);
+//      nextFile.print("<->");
+//      nextFile.print(buttonPushCounter);
+//      nextFile.print("<->");
+//      nextFile.close();
+//      
+//      //if there is no rain add 1 to noRainCounter
+//      if(buttonPushCounter == 0){
+//        noRainCounter++;
+//      }else{
+//        //otherwise make noRainCounter to be zero again
+//        noRainCounter = 0;
+//      }
+//
+//      //once no rain counter reach 10 start sending and make
+//      //no rain counter to be 0
+//      if(noRainCounter == 5){
+//        noRainCounter = 0;
+//        startSending = 1;
+//      }else{
+//        noOfFile++;
+//      }
+//      
+//      buttonPushCounter=0;
+//      //readFromSdCard();
+//      //deleteFromSdCard();
+//      //sendToServer();
+//    }else{
+//      // if the file didn't open, print an error:
+//      Serial.println("error opening file from read");
+//    }
+//    
+//    lcd.setCursor(9,3);
+//    lcd.print("          ");
+//}
+
+
+
+int readFromSdCard(){
+
+  //setting upToNoOfFile
+  //if noOfFile is greater than 50
+  //set upToNoOfFile 50 less than noOfFile
+  //because that is the limit to be sent
+
+  //reset buffer
+  resetBuffer();
+  //---------------------------------------------------------------------
+  //----------------read longitude and latitude first--------------------
+  //---------------------------------------------------------------------
+
+  //read long file
+  nextFile = SD.open(longFile);
+  if(nextFile){
+    while (nextFile.available()) {
+        //Serial.write(nextFile.read());
+        buffer[pos++] = nextFile.read();
+    }
+    buffer[pos++] = ',';
+    nextFile.close();
+  }
+  //read lat file
+  nextFile = SD.open(latFile);
+  if(nextFile){
+    while (nextFile.available()) {
+        //Serial.write(nextFile.read());
+        buffer[pos++] = nextFile.read();
+    }
+    buffer[pos++] = ',';
+    nextFile.close();
+  }
+
+  //---------------------------------------------------------------------
+  //----------------read longitude and latitude first--------------------
+  //---------------------------------------------------------------------
+  int range;
+  
+  if(noOfFile > 10)
+    range = 10;
+  else
+    range = noOfFile;
+    
+  int limit = noOfFile - range;
+  for(upToNoOfFile = noOfFile; upToNoOfFile > limit; upToNoOfFile--){
+    itoa(upToNoOfFile,sNoOfFile,10);
+    strcat(sNoOfFile, ".TXT");
+    // re-open the file for reading:
+    //sNoOfFile is used here because it is concatinated to .txt file before in write
+    nextFile = SD.open(sNoOfFile);
+    Serial.println(sNoOfFile);
+    if (nextFile) {
+     
+      // read from the file until there's nothing else in it:
+      while (nextFile.available()) {
+        //Serial.write(nextFile.read());
+        buffer[pos++] = nextFile.read();
+      }
+      // close the file:
+      nextFile.close();
+//      if(pos >= 2000)
+//        break;
+    } else {
+      // if the file didn't open, print an error:
+      Serial.println("error opening file from read");
+    }
+  }
+  Serial.write("--------------->");
+  Serial.write(buffer);
+  lcd.write(sNoOfFile);
+}
+
+int deleteFromSdCardByInterval(){
+  Serial.print("upToNoOfFile = ");
+  Serial.print(upToNoOfFile);
+  for(int tempNoOfFile = upToNoOfFile+1; tempNoOfFile <= noOfFile; tempNoOfFile++){
+    
+    itoa(tempNoOfFile,sNoOfFile,10);
+    strcat(sNoOfFile, ".TXT");
+    Serial.print("deleting");
+    Serial.println(sNoOfFile);
+    SD.remove(sNoOfFile);
+  }
+}
+
+int deleteFromSdCard(){
+  if(SD.remove(sNoOfFile)){
+    Serial.print(sNoOfFile);
+    Serial.print("deleted");
+  }else{
+    Serial.print("can not delete");
+    Serial.print(sNoOfFile);
+  }
+}
+
+int formatMemory(){
+  char fileToBeDeleted[10];
+  for(int i = 1; i <= noOfFile; i++){
+     itoa(i,fileToBeDeleted,10);
+    strcat(fileToBeDeleted, ".TXT");
+    if(SD.remove(fileToBeDeleted)){
+      Serial.print(fileToBeDeleted);
+      Serial.print(" ");
+      Serial.println("deleted");
+    }
+  }
+  noOfFile = 1;
+}
+
+
+void sendToServer(){
+     // initialize http service
+   mySerial.println("AT+HTTPINIT");
+   delay(2000); 
+   toSerial();
+ 
+   // set http param value
+   memset(data, 0, 100);
+   memset(url, 0, 130);
+
+   sprintf(data,"kebede");
+   //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
+   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data4.php?data=%s\"",buffer);
+   mySerial.println(url);
+   //mySerial.println("AT+HTTPPARA=\"URL\",\"https://www.nrwlpms.com/sim900/get_data.php?pre=%222022-02-18%202014:33:38%3C-%3E0%22\"");
+
+   delay(5000);
+   toSerial();
+
+   // set http action type 0 = GET, 1 = POST, 2 = HEAD
+   mySerial.println("AT+HTTPACTION=0");
+   delay(6000);
+   toSerial();
+
+   // read server response
+   mySerial.println("AT+HTTPREAD"); 
+   delay(1000);
+   toSerial();
+   delay(2000);
+
+   mySerial.println("");
+   mySerial.println("AT+HTTPTERM");
+   toSerial();
+   delay(300);
+
+//   mySerial.println("");
+//   delay(10000);
+}
+
+void toSerial()
+{
+  resetBufferGSM();
+  
+  while(mySerial.available()!=0)
+  {
+    byte b = mySerial.read();
+    bufferGSM[posGSM++] = b;
+    if(b == '^'){
+      
+      deleteFromSdCardByInterval();
+   
+      //reset noOfFile
+      if(upToNoOfFile == 0){
+        noOfFile = 1;
+      }else{
+        noOfFile = upToNoOfFile;
+      }
+      
+    }
+    if(b == '@'){
+      //if fail make send flag to be 0 and stop sending all togather 
+      startSending = 0;
+    }
+    //Serial.write(mySerial.read());
+  }
+  Serial.write(bufferGSM);
+  if(initialSendTestFlag){
+    lcd.clear();
+    lcd.print(bufferGSM);
+    delay(3000);
+    lcd.clear();
+  }
+}
+
+void initialSendTest(){
+  lcd.clear();
+  lcd.setCursor(1,1);
+  lcd.print("initial send test.");
+  
+  //gsm_setup
+  gsmSetup();
+  lcd.clear();
+  //gsm_setup
+  // initialize http service
+   mySerial.println("AT+HTTPINIT");
+   delay(2000); 
+   toSerial();
+ 
+   // set http param value
+   memset(data, 0, 100);
+   memset(url, 0, 130);
+
+   sprintf(data,"kebede");
+   //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
+   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data2.php?data=%s\"","0000-00-00_00:00:00<->0<->0<->0<->");
+   mySerial.println(url);
+   //mySerial.println("AT+HTTPPARA=\"URL\",\"https://www.nrwlpms.com/sim900/get_data.php?pre=%222022-02-18%202014:33:38%3C-%3E0%22\"");
+
+   delay(5000);
+   toSerial();
+
+   // set http action type 0 = GET, 1 = POST, 2 = HEAD
+   mySerial.println("AT+HTTPACTION=0");
+   delay(6000);
+   toSerial();
+
+   // read server response
+   mySerial.println("AT+HTTPREAD"); 
+   delay(1000);
+   toSerial();
+   delay(2000);
+
+   mySerial.println("");
+   mySerial.println("AT+HTTPTERM");
+   toSerial();
+   delay(300);
+
+//   mySerial.println("");
+//   delay(10000);
+
+   initialSendTestFlag = 0;
+}
+
+int gsmSetup(){
+  delay(30000);
+  mySerial.begin(19200);
+  Serial.begin(19200);
+
+  lcd.clear();
+  Serial.println("Config SIM900...");
+  lcd.print("Config SIM900...");
+  
+  delay(2000);
+  lcd.clear();
+  Serial.println("Done!...");
+  lcd.print("Done!...");
+  
+  mySerial.flush();
+  Serial.flush();
+
+  // attach or detach from GPRS service 
+  lcd.clear();
+  mySerial.println("AT+CGATT?");
+  lcd.print("AT+CGATT?");
+  
+  delay(100);
+  toSerial();
+
+  // bearer settings
+  lcd.clear();
+  mySerial.println("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
+  lcd.print("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
+  
+  delay(2000);
+  toSerial();
+
+  // bearer settings
+  lcd.clear();
+  mySerial.println("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
+  lcd.print("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
+  
+  delay(2000);
+  toSerial();
+  delay(2000);
+
+  // bearer settings
+  lcd.clear();
+  mySerial.println("AT+SAPBR=1,1");
+  lcd.print("AT+SAPBR=1,1");
+  
+  delay(2000);
+  toSerial();
+
+  // bearer settings
+  lcd.clear();
+  mySerial.println("AT+SAPBR=2,1");
+  lcd.print("AT+SAPBR=2,1");
+  
+  delay(2000);
+  toSerial();
+
+   // initialize http service
+   lcd.clear();
+   mySerial.println("AT+HTTPINIT");
+   lcd.print("AT+HTTPINIT");
+   
+   delay(2000); 
+   toSerial();
+   delay(5000);
+}
