@@ -1,0 +1,12 @@
+if(typeof __ez!="undefined"){__ez.vf=__ez.vf||{};__ez.vf.determineFloatingPlayer=function(vid){if(vid instanceof HTMLVideoElement==false){return '';}
+for(var i=0;i<__ez.vf.floatingPlayers.length;i++){if(__ez.vf.floatingPlayers[i].isOfType(vid)){return __ez.vf.floatingPlayers[i].name;}}
+return 'unknown';};if(!__ez.vf.floatingPlayers){class EzFloatingPlayerDeterminer{isOfType(vid){return false;}
+constructor(name,typeCheckFunc){this.name=name;this.isOfType=typeCheckFunc;}}
+__ez.vf.floatingPlayers=[new EzFloatingPlayerDeterminer("connatix",function(e){if(e instanceof HTMLVideoElement==false){return false;}
+let containsCnxClass=function(c){let classes=Array.from(c);return classes.filter(c=>c.startsWith('cnx-')).length>0;}
+if(e.parentElement&&e.parentElement.parentElement&&e.parentElement.parentElement.parentElement){return containsCnxClass(e.parentElement.parentElement.parentElement.classList)||containsCnxClass(e.classList);}
+return containsCnxClass(e.classList);}),new EzFloatingPlayerDeterminer("vdo.ai",function(e){if(e instanceof HTMLVideoElement==false){return false;}
+return e.id.startsWith("vdo_ai_");}),];}
+__ez.vf.getAllFloatingPlayers=function(){let floatingPlayersFound=[];let vids=Array.from(document.getElementsByTagName("video"));vids.forEach(videoElement=>{let parent=videoElement.parentElement;while(parent){let parentPos=getComputedStyle(parent).position;if(parentPos==='fixed'||parentPos==='absolute'){floatingPlayersFound.push(videoElement);break}
+parent=parent.parentElement;}});return floatingPlayersFound;}
+__ez.vf.isOnlyFloatingPlayer=function(n){let anotherPlayerExists=false;__ez.vf.getAllFloatingPlayers().every(player=>{let playerName=__ez.vf.determineFloatingPlayer(player);anotherPlayerExists=playerName&&playerName!==n;return!anotherPlayerExists;});return!anotherPlayerExists;}}
