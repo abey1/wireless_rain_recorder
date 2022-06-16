@@ -1,0 +1,1 @@
+https://lastminuteengineers.com/sim800l-gsm-module-arduino-tutorial/#:~:text=Wiring%20%E2%80%93%20Connecting%20SIM800L%20GSM%20module%20to%20Arduino%20UNO&text=Start%20by%20soldering%2Fconnecting%20the,to%20talk%20to%20the%20module.

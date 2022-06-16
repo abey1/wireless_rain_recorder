@@ -1,6 +1,6 @@
 #include <SoftwareSerial.h> //software serial library for serial communication b/w arduino & mySerial
 
-SoftwareSerial mySerial(12, 13);//connect Tx pin of mySerial to pin 8 of arduino && Rx pin of mySerial to pin no 9 of arduino
+SoftwareSerial mySerial (12,13);//(12, 13);//connect Tx pin of mySerial to pin 8 of arduino && Rx pin of mySerial to pin no 9 of arduino
 
 #include <Keypad.h>
 #include <LiquidCrystal_I2C.h>
@@ -407,7 +407,7 @@ void setup(){
 
   //set relay pin as output
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, HIGH);
+  digitalWrite(RELAY_PIN, LOW);
   
   //begin clock
   clock.begin();
@@ -532,9 +532,9 @@ void loop(){
   if(startSending == 1){
     
     //switch on the relay
-    digitalWrite(RELAY_PIN, LOW);
+    digitalWrite(RELAY_PIN, HIGH);
     Serial.println("relay on");
-    delay(5000);
+    delay(500);
     
     gsmSetup();
     delay(500);
@@ -568,7 +568,7 @@ void loop(){
     startSending = 0;
 
     //switch off the relay
-    digitalWrite(RELAY_PIN, HIGH);
+    digitalWrite(RELAY_PIN, LOW);
     
     lcd.noBacklight();
 
