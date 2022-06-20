@@ -18,8 +18,8 @@
 
 #define START_SENDING 0
 
-#define ACCEPTED "accep"
-#define BUSY "busyy"
+#define IDLEE "idlee"
+#define BUSYY "busyy"
 
 #include <SPI.h>
 #include <SD.h>
@@ -68,14 +68,17 @@ void loop() {
 //    buffer[pos++] = DATA[i];
 //  }
 
-  readFromSdCard();
   
-  sendDataToSlave();
+  if(isSlaveIdle()){
+    readFromSdCard();
+    sendDataToSlave();
+  }
+  
 
  
   delay(500);
   
-  receiveDataFromSlave();
+  //receiveDataFromSlave();
   
   //readFromSdCard();
   //delay(500);
@@ -94,6 +97,7 @@ void loop() {
 
 void sendDataToSlave(){
   char temp[32];
+  Serial.println("");
   for(int i = 0; i <= pos; i+=32){  
     int k = 0;
     for(int j = i; j < i+32; j++){
@@ -117,7 +121,9 @@ int writeDataToSlave(byte order){
   Wire.endTransmission();
 }
 
-int receiveDataFromSlave(){
+bool isSlaveIdle(){
+  bool idle = true;
+  
   Serial.println("Receive data");
   
   // Read response from Slave
@@ -133,13 +139,12 @@ int receiveDataFromSlave(){
   
   // Print to Serial Monitor
   Serial.println(response);
-  if(response == ACCEPTED){
-    deleteFiles();
+  if(response == BUSYY){
+    //deleteFiles();
+    idle = false;
   }
 
-  if(response == BUSY){
-    Serial.println("do nothing...");
-  }
+  return idle;
 }
 
 void deleteFiles(){
