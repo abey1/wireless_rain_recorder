@@ -106,7 +106,7 @@ void resetBuffer() {
 }
 
 void loop() {
-  if(pos > 110){
+  if(pos > 90){
     startSending();
   }
   delay(1000);

@@ -1,6 +1,6 @@
-#include <SoftwareSerial.h> //software serial library for serial communication b/w arduino & mySerial
+//#include <SoftwareSerial.h> //software serial library for serial communication b/w arduino & mySerial
 
-SoftwareSerial mySerial(12, 13);//connect Tx pin of mySerial to pin 8 of arduino && Rx pin of mySerial to pin no 9 of arduino
+//SoftwareSerial mySerial(12, 13);//connect Tx pin of mySerial to pin 8 of arduino && Rx pin of mySerial to pin no 9 of arduino
 
 #include <Keypad.h>
 #include <LiquidCrystal_I2C.h>
@@ -102,13 +102,13 @@ int upToNoOfFile = 1;
 
 
 //number of files history
-int noOfFileHistory = 1;
+//int noOfFileHistory = 1;
 
 //send attempt counter
 int sendAttempt = 0;
 
 //number of files counter to be sent through GSM module
-int noOfFileGSM = 1;
+//int noOfFileGSM = 1;
 
 //variable to hold noOfFile changed to string
 char sNoOfFile[10];
@@ -865,39 +865,40 @@ int formatMemory(){
 
 
 void sendToServer(){
+  Serial.println("sending to server");
      // initialize http service
-   mySerial.println("AT+HTTPINIT");
-   delay(2000); 
-   toSerial();
- 
-   // set http param value
-   memset(data, 0, 100);
-   memset(url, 0, 130);
-
-   sprintf(data,"kebede");
-   //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
-   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data4.php?data=%s\"",buffer);
-   mySerial.println(url);
-   //mySerial.println("AT+HTTPPARA=\"URL\",\"https://www.nrwlpms.com/sim900/get_data.php?pre=%222022-02-18%202014:33:38%3C-%3E0%22\"");
-
-   delay(5000);
-   toSerial();
-
-   // set http action type 0 = GET, 1 = POST, 2 = HEAD
-   mySerial.println("AT+HTTPACTION=0");
-   delay(6000);
-   toSerial();
-
-   // read server response
-   mySerial.println("AT+HTTPREAD"); 
-   delay(1000);
-   toSerial();
-   delay(2000);
-
-   mySerial.println("");
-   mySerial.println("AT+HTTPTERM");
-   toSerial();
-   delay(300);
+//   mySerial.println("AT+HTTPINIT");
+//   delay(2000); 
+//   toSerial();
+// 
+//   // set http param value
+//   memset(data, 0, 100);
+//   memset(url, 0, 130);
+//
+//   sprintf(data,"kebede");
+//   //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
+//   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data4.php?data=%s\"",buffer);
+//   mySerial.println(url);
+//   //mySerial.println("AT+HTTPPARA=\"URL\",\"https://www.nrwlpms.com/sim900/get_data.php?pre=%222022-02-18%202014:33:38%3C-%3E0%22\"");
+//
+//   delay(5000);
+//   toSerial();
+//
+//   // set http action type 0 = GET, 1 = POST, 2 = HEAD
+//   mySerial.println("AT+HTTPACTION=0");
+//   delay(6000);
+//   toSerial();
+//
+//   // read server response
+//   mySerial.println("AT+HTTPREAD"); 
+//   delay(1000);
+//   toSerial();
+//   delay(2000);
+//
+//   mySerial.println("");
+//   mySerial.println("AT+HTTPTERM");
+//   toSerial();
+//   delay(300);
 
 //   mySerial.println("");
 //   delay(10000);
@@ -905,152 +906,156 @@ void sendToServer(){
 
 void toSerial()
 {
-  resetBufferGSM();
-  
-  while(mySerial.available()!=0)
-  {
-    byte b = mySerial.read();
-    bufferGSM[posGSM++] = b;
-    if(b == '^'){
-      
-      deleteFromSdCardByInterval();
-   
-      //reset noOfFile
-      if(upToNoOfFile == 0){
-        noOfFile = 1;
-      }else{
-        noOfFile = upToNoOfFile;
-      }
-      
-    }
-    if(b == '@'){
-      //if fail make send flag to be 0 and stop sending all togather 
-      startSending = 0;
-    }
-    //Serial.write(mySerial.read());
-  }
-  Serial.write(bufferGSM);
-  if(initialSendTestFlag){
-    lcd.clear();
-    lcd.print(bufferGSM);
-    delay(3000);
-    lcd.clear();
-  }
+
+  Serial.println("to serial");
+//  resetBufferGSM();
+//  
+//  while(mySerial.available()!=0)
+//  {
+//    byte b = mySerial.read();
+//    bufferGSM[posGSM++] = b;
+//    if(b == '^'){
+//      
+//      deleteFromSdCardByInterval();
+//   
+//      //reset noOfFile
+//      if(upToNoOfFile == 0){
+//        noOfFile = 1;
+//      }else{
+//        noOfFile = upToNoOfFile;
+//      }
+//      
+//    }
+//    if(b == '@'){
+//      //if fail make send flag to be 0 and stop sending all togather 
+//      startSending = 0;
+//    }
+//    //Serial.write(mySerial.read());
+//  }
+//  Serial.write(bufferGSM);
+//  if(initialSendTestFlag){
+//    lcd.clear();
+//    lcd.print(bufferGSM);
+//    delay(3000);
+//    lcd.clear();
+//  }
 }
 
 void initialSendTest(){
-  lcd.clear();
-  lcd.setCursor(1,1);
-  lcd.print("initial send test.");
-  
-  //gsm_setup
-  gsmSetup();
-  lcd.clear();
-  //gsm_setup
-  // initialize http service
-   mySerial.println("AT+HTTPINIT");
-   delay(2000); 
-   toSerial();
- 
-   // set http param value
-   memset(data, 0, 100);
-   memset(url, 0, 130);
-
-   sprintf(data,"kebede");
-   //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
-   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data2.php?data=%s\"","0000-00-00_00:00:00<->0<->0<->0<->");
-   mySerial.println(url);
-   //mySerial.println("AT+HTTPPARA=\"URL\",\"https://www.nrwlpms.com/sim900/get_data.php?pre=%222022-02-18%202014:33:38%3C-%3E0%22\"");
-
-   delay(5000);
-   toSerial();
-
-   // set http action type 0 = GET, 1 = POST, 2 = HEAD
-   mySerial.println("AT+HTTPACTION=0");
-   delay(6000);
-   toSerial();
-
-   // read server response
-   mySerial.println("AT+HTTPREAD"); 
-   delay(1000);
-   toSerial();
-   delay(2000);
-
-   mySerial.println("");
-   mySerial.println("AT+HTTPTERM");
-   toSerial();
-   delay(300);
-
+  Serial.println("initial send test");
+//  lcd.clear();
+//  lcd.setCursor(1,1);
+//  lcd.print("initial send test.");
+//  
+//  //gsm_setup
+//  gsmSetup();
+//  lcd.clear();
+//  //gsm_setup
+//  // initialize http service
+//   mySerial.println("AT+HTTPINIT");
+//   delay(2000); 
+//   toSerial();
+// 
+//   // set http param value
+//   memset(data, 0, 100);
+//   memset(url, 0, 130);
+//
+//   sprintf(data,"kebede");
+//   //sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/get_data.php?pre=%s\"",buffer);
+//   sprintf(url,"AT+HTTPPARA=\"URL\",\"http://www.nrwlpms.com/sim900/save_data2.php?data=%s\"","0000-00-00_00:00:00<->0<->0<->0<->");
+//   mySerial.println(url);
+//   //mySerial.println("AT+HTTPPARA=\"URL\",\"https://www.nrwlpms.com/sim900/get_data.php?pre=%222022-02-18%202014:33:38%3C-%3E0%22\"");
+//
+//   delay(5000);
+//   toSerial();
+//
+//   // set http action type 0 = GET, 1 = POST, 2 = HEAD
+//   mySerial.println("AT+HTTPACTION=0");
+//   delay(6000);
+//   toSerial();
+//
+//   // read server response
+//   mySerial.println("AT+HTTPREAD"); 
+//   delay(1000);
+//   toSerial();
+//   delay(2000);
+//
 //   mySerial.println("");
-//   delay(10000);
-
-   initialSendTestFlag = 0;
+//   mySerial.println("AT+HTTPTERM");
+//   toSerial();
+//   delay(300);
+//
+////   mySerial.println("");
+////   delay(10000);
+//
+//   initialSendTestFlag = 0;
 }
 
 int gsmSetup(){
-  delay(30000);
-  mySerial.begin(19200);
-  Serial.begin(19200);
-
-  lcd.clear();
-  Serial.println("Config SIM900...");
-  lcd.print("Config SIM900...");
-  
-  delay(2000);
-  lcd.clear();
-  Serial.println("Done!...");
-  lcd.print("Done!...");
-  
-  mySerial.flush();
-  Serial.flush();
-
-  // attach or detach from GPRS service 
-  lcd.clear();
-  mySerial.println("AT+CGATT?");
-  lcd.print("AT+CGATT?");
-  
-  delay(100);
-  toSerial();
-
-  // bearer settings
-  lcd.clear();
-  mySerial.println("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
-  lcd.print("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
-  
-  delay(2000);
-  toSerial();
-
-  // bearer settings
-  lcd.clear();
-  mySerial.println("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
-  lcd.print("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
-  
-  delay(2000);
-  toSerial();
-  delay(2000);
-
-  // bearer settings
-  lcd.clear();
-  mySerial.println("AT+SAPBR=1,1");
-  lcd.print("AT+SAPBR=1,1");
-  
-  delay(2000);
-  toSerial();
-
-  // bearer settings
-  lcd.clear();
-  mySerial.println("AT+SAPBR=2,1");
-  lcd.print("AT+SAPBR=2,1");
-  
-  delay(2000);
-  toSerial();
-
-   // initialize http service
-   lcd.clear();
-   mySerial.println("AT+HTTPINIT");
-   lcd.print("AT+HTTPINIT");
-   
-   delay(2000); 
-   toSerial();
-   delay(5000);
+  Serial.println("gsm setup");
+//  delay(30000);
+//  mySerial.begin(19200);
+//  Serial.begin(19200);
+//
+//  lcd.clear();
+//  Serial.println("Config SIM900...");
+//  lcd.print("Config SIM900...");
+//  
+//  delay(2000);
+//  lcd.clear();
+//  Serial.println("Done!...");
+//  lcd.print("Done!...");
+//  
+//  mySerial.flush();
+//  Serial.flush();
+//
+//  // attach or detach from GPRS service 
+//  lcd.clear();
+//  mySerial.println("AT+CGATT?");
+//  lcd.print("AT+CGATT?");
+//  
+//  delay(100);
+//  toSerial();
+//
+//  // bearer settings
+//  lcd.clear();
+//  mySerial.println("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
+//  lcd.print("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"");
+//  
+//  delay(2000);
+//  toSerial();
+//
+//  // bearer settings
+//  lcd.clear();
+//  mySerial.println("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
+//  lcd.print("AT+SAPBR=3,1,\"APN\",\"movistar.es\"");
+//  
+//  delay(2000);
+//  toSerial();
+//  delay(2000);
+//
+//  // bearer settings
+//  lcd.clear();
+//  mySerial.println("AT+SAPBR=1,1");
+//  lcd.print("AT+SAPBR=1,1");
+//  
+//  delay(2000);
+//  toSerial();
+//
+//  // bearer settings
+//  lcd.clear();
+//  mySerial.println("AT+SAPBR=2,1");
+//  lcd.print("AT+SAPBR=2,1");
+//  
+//  delay(2000);
+//  toSerial();
+//
+//   // initialize http service
+//   lcd.clear();
+//   mySerial.println("AT+HTTPINIT");
+//   lcd.print("AT+HTTPINIT");
+//   
+//   delay(2000); 
+//   toSerial();
+//   delay(5000);
 }
