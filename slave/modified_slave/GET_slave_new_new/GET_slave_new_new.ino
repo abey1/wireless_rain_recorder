@@ -97,24 +97,22 @@ void sendAnswer(String answer, int ANSWERSIZE){
 
 void startSending(){
   Serial.println("sending...");
-  //delay(30000);
   sendDataToInternet0();
 }
 
 void resetBuffer() {
   Serial.println("reseting buffer");
-  //memset(buffer, 0, sizeof(buffer));
+  memset(buffer, 0, sizeof(buffer));
   pos = 0;
 }
 
 void loop() {
-
-  
   if(pos > 0){
     if(buffer[pos-1] == endOfFileChar){
       startSending();
     }
   }
+  
   delay(10000);
 }
 
@@ -125,8 +123,7 @@ void receiveEvent() {
     char c = Wire.read(); // receive byte as a character
     buffer[pos++] = c;
   }
-  Serial.print("pos = ");
-  Serial.println(pos);
+  Serial.println(buffer);
 }
 
 char* concatinate(char s1[], char s2[]){
@@ -134,38 +131,55 @@ char* concatinate(char s1[], char s2[]){
 
   // store length of s1 in the length variable
   length = 0;
-  while (s1[length] != '=') {
+  while (s1[length] != '\0') {
     ++length;
   }
-  ++length;
-  
+
+  //s2 is buffer that is why it is E
   // concatenate s2 to s1
-  for (j = 0; s2[j] != 'E'; ++j, ++length) {
+  for (j = 0; s2[j] != '\0'; ++j, ++length) {
     s1[length] = s2[j];
   }
 
   // terminating the s1 string
-  s1[length] = 'E';
-  s1[++length] = '\0';
+  s1[length] = '\0';
 
   return s1;
 }
 
 void sendDataToInternet0(){
 
-  char* U;
-
-  //U = concatinate("http://www.nrwlpms.com/sim900/save_data4.php?data=", buffer);
-
-  Serial.print("buffer is in send 0 : ");
-  Serial.print(buffer);
+  //char* U = "http://www.nrwlpms.com/sim900/save_data4.php?data=";
+  char* U = "http://www.nrwlpms.com/sim900/a6_try_one.php?data=";
   
-  sendDataToInternet(concatinate("http://www.nrwlpms.com/sim900/save_data4.php?data=", buffer));
+  //U = concatinate(U, buffer);
+
+  //U = concatinate(U, "55,217,2022-06-21_10:26:36|0,2022-06-21_10:26:31|0,2022-06-21_10:26:25|0,2022-06-21_10:26:20|0,2022-06-21_10:26:14|0,E@⸮");
+  
+//  char* tempBuffer;
+//
+//  for(int i = 0; i < pos; i++){
+//    tempBuffer[i] = buffer[i];
+//  }
+//
+//  char* tempTempBuffer = malloc(pos);
+//  
+//  strcpy(tempTempBuffer, tempBuffer);
+  
+  U = concatinate(U, buffer);
+  
+  sendDataToInternet(U);
 }
 
 int sendDataToInternet(char* URL){
   
-  Serial.println(URL);
+//  Serial.println(URL);
+//  delay(500);
+//  int length = 0;
+//  while (URL[length] != '\0') {
+//    Serial.println(URL[length++]);
+//  }
+//  delay(500);
   // Establish GPRS connectivity (5 trials)
   bool connected = false;
   
@@ -190,28 +204,33 @@ int sendDataToInternet(char* URL){
 
   // Do HTTP GET communication with 10s for the timeout (read)
   uint16_t rc = sim800l->doGet(URL, 10000);
-   if(true){//rc == 200) {
-    resetBuffer();
-    // Success, output the data received on the serial
-    Serial.print(F("HTTP GET successful ("));
-    Serial.print(sim800l->getDataSizeReceived());
-    Serial.println(F(" bytes)"));
-    Serial.print(F("Received : "));
-    //Serial.print(sim800l->getDataReceived());
-    String s = sim800l->getDataReceived();
-    Serial.print(s);
-    if(true){//s == "^"){
-      //deleteFile();
-      
-      Serial.print("file deleted");
-    }else{
-      Serial.print("error");
-    }
-  } else {
-    // Failed...
-    Serial.print(F("HTTP GET error "));
-    Serial.println(rc);
-  }
+  delay(1000);
+  resetBuffer();
+//   if(rc == 200) {
+//    // Success, output the data received on the serial
+    Serial.print("F(HTTP GET successful ("));
+//    Serial.println("reseting buffer");
+//    memset(buffer, 0, sizeof(buffer));
+//    pos = 0;
+//    //Serial.print(sim800l->getDataSizeReceived());
+//    //Serial.println(F(" bytes)"));
+//    //Serial.print(F("Received : "));
+//    //Serial.print(sim800l->getDataReceived());
+//    //String s = sim800l->getDataReceived();
+//    resetBuffer();
+//    Serial.print(s);
+//    if(s == "^"){
+//      //deleteFile();
+//      resetBuffer();
+//      Serial.print("file deleted");
+//    }else{
+//      Serial.print("error");
+//    }
+//  } else {
+//    // Failed...
+//    Serial.print(F("HTTP GET error "));
+//    Serial.println(rc);
+//  }
 
   delay(1000);
 

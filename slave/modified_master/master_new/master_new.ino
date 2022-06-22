@@ -38,7 +38,7 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 File nextFile;
 
-char buffer[2000];
+char buffer[200];
 
 int noOfFile = 1;
 
@@ -87,7 +87,7 @@ long previousMillisSd; //to display seconds on lcd
 long sendingGap;
 //the interval for the lcd to stay showing light after user pressed 'D'
 long intervalLCD = 60000;
-long intervalSd = 900000;
+long intervalSd = 300000;
 long sendingInterval = 120000;
 
 //longIndex and latIndex are used to trace when user inputs value for longitude and latitude
@@ -112,6 +112,8 @@ int noRainCounter = 0;
 //
 int startSending = 0;
 
+// end of file
+const char endOfFileChar = 'E';
 
 void resetBuffer() {
   memset(buffer, 0, sizeof(buffer));
@@ -539,7 +541,12 @@ void loop() {
      buttonPushCounter++;
      //save to file
      writeToSdCard('1');
-     delay(5);
+     delay(1000);
+     if(isSlaveIdle()){
+        readFromSdCard();
+        sendDataToSlave();
+      }
+     
      //reset default saver
      previousMillisSd = millis();
      //subtract one from no-rain counter
@@ -563,18 +570,22 @@ void loop() {
   //no rain appeared for some time
   if(millis() - previousMillisSd > intervalSd){
        writeToSdCard('0');
+       if(isSlaveIdle()){
+        readFromSdCard();
+        sendDataToSlave();
+      }
        //add one to noRainCouter
-       noRainCounter++;
-       //if noRainCounter reaches certain value
-       //start sending
-       if(noRainCounter == 5){
-         //reset noRainCounter to 0
-         noRainCounter = 0;
-         //set flag to start sending to 1 
-         startSending = 1;
-       }else{
-         noOfFile++;
-       }
+//       noRainCounter++;
+//       //if noRainCounter reaches certain value
+//       //start sending
+//       if(noRainCounter == 5){
+//         //reset noRainCounter to 0
+//         noRainCounter = 0;
+//         //set flag to start sending to 1 
+//         startSending = 1;
+//       }else{
+//         noOfFile++;
+//       }
     //reset default sending time
     previousMillisSd = millis();
   }
@@ -593,20 +604,24 @@ void loop() {
 
   //dims light of lcd after intervalLCD seconds
   if(millis() - sendingGap > sendingInterval) {
-    if(startSending == 1){
+    if(noOfFile > 0){
       if(isSlaveIdle()){
         readFromSdCard();
         sendDataToSlave();
       }
     }
-    sendingGap = millis(); 
+    //send every 5 minutes after once start sending
+    sendingGap = millis();
   }
-  
-  
-
-  if(noOfFile == 1){
-    startSending = 0;
-  }
+//  
+//  
+//
+//  if(noOfFile == 1){
+//    startSending = 0;
+//    sendingGap = millis();
+//    //reset sendinginterval to every 15 minutes
+//    sendingInterval = 900000; 
+//  }
   //78888888888888888888888888888
 
   snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d_%02d:%02d:%02d",
@@ -677,14 +692,14 @@ void sendDataToSlave(){
   }
 }
 
-int writeDataToSlave(byte order){
-  Serial.println("Write data to slave");
-  
-  // Write a charatre to the Slave
-  Wire.beginTransmission(SLAVE_ADDR);
-  Wire.write("55,217,2022-06-02_09:11:23|0,2022-06-02_09:11:17|0,2022-06-02_09:11:12|0,2022-06-02_09:04:25|0,2022-06-02_06:48:22|0,2022-06-02_06:48:16|0,2022-06-02_06:48:11|0,2022-06-02_06:48:05|0,2022-06-02_06:42:57|0,2022-06-02_06:42:51|0");
-  Wire.endTransmission();
-}
+//int writeDataToSlave(byte order){
+//  Serial.println("Write data to slave");
+//  
+//  // Write a charatre to the Slave
+//  Wire.beginTransmission(SLAVE_ADDR);
+//  Wire.write("55,217,2022-06-02_09:11:23|0,2022-06-02_09:11:17|0,2022-06-02_09:11:12|0,2022-06-02_09:04:25|0,2022-06-02_06:48:22|0,2022-06-02_06:48:16|0,2022-06-02_06:48:11|0,2022-06-02_06:48:05|0,2022-06-02_06:42:57|0,2022-06-02_06:42:51|0");
+//  Wire.endTransmission();
+//}
 
 bool isSlaveIdle(){
   bool idle = true;
@@ -750,12 +765,12 @@ int readFromSdCard(){
       nextFile.close();
     }
   
-    int range;
+    int range = 1;
     
-    if(noOfFile > 5)
-      range = 5;
-    else
-      range = noOfFile;
+//    if(noOfFile > 1)
+//      range = 1;
+//    else
+//      range = noOfFile;
       
     int limit = noOfFile - range;
     
@@ -776,6 +791,7 @@ int readFromSdCard(){
         Serial.println("error opening file from read");
       }
     }
+    buffer[pos++] = endOfFileChar;
     Serial.write("--------------->");
     Serial.write(buffer);
     deleteFromSdCardByInterval(range);
@@ -794,4 +810,6 @@ int deleteFromSdCardByInterval(int range){
     SD.remove(sNoOfFile);
   }
   noOfFile -= range;
+  Serial.print("noOfFile = ");
+  Serial.println(noOfFile);
 }

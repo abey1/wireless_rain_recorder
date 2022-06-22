@@ -190,8 +190,8 @@ int sendDataToInternet(char* URL){
 
   // Do HTTP GET communication with 10s for the timeout (read)
   uint16_t rc = sim800l->doGet(URL, 10000);
-   if(true){//rc == 200) {
-    resetBuffer();
+   if(rc == 200) {
+    
     // Success, output the data received on the serial
     Serial.print(F("HTTP GET successful ("));
     Serial.print(sim800l->getDataSizeReceived());
@@ -200,9 +200,9 @@ int sendDataToInternet(char* URL){
     //Serial.print(sim800l->getDataReceived());
     String s = sim800l->getDataReceived();
     Serial.print(s);
-    if(true){//s == "^"){
+    if(s == "^"){
       //deleteFile();
-      
+      resetBuffer();
       Serial.print("file deleted");
     }else{
       Serial.print("error");

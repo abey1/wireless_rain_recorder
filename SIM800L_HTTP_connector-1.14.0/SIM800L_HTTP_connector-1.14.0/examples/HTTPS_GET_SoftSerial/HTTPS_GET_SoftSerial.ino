@@ -1,28 +1,31 @@
-/*
-  I2C Slave Demo
-  i2c-slave-demo.ino
-  Demonstrate use of I2C bus
-  Slave receives character from Master and respondsb
-  DroneBot Workshop 2019
-  https://dronebotworkshop.com
-*/
-
-
-
-// Include Arduino Wire library for I2C
-#include <Wire.h>
-
-//#include <SPI.h>
-//#include <SD.h>
-
-// Define Slave I2C Address
-#define SLAVE_ADDR 9
-
-// Define Slave answer size
-//#define ANSWERSIZE 5
-
-#define START_SENDING 0
-
+/********************************************************************************
+ * Example of HTTPS GET with SoftwareSerial and Arduino-SIM800L-driver          *
+ *                                                                              *
+ * Author: Olivier Staquet                                                      *
+ * Last version available on https://github.com/ostaquet/Arduino-SIM800L-driver *
+ ********************************************************************************
+ * MIT License
+ *
+ * Copyright (c) 2019 Olivier Staquet
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *******************************************************************************/
 #include <SoftwareSerial.h>
 
 #include "SIM800L.h"
@@ -32,26 +35,14 @@
 #define SIM800_RST_PIN 6
 
 const char APN[] = "Internet.be";
+const char URL[] = "https://postman-echo.com/get?foo1=bar1&foo2=bar2";
 
 SIM800L* sim800l;
 
-char buffer[200];
-
-byte pos = 0;
-
-// end of file
-const char endOfFileChar = 'E';
-
-void setup() {
-
-  // Initialize I2C communications as Slave
-  Wire.begin(SLAVE_ADDR);
-  
-  // Function to run when data requested from master
-  Wire.onRequest(requestEvent); 
-  
-  // Function to run when data received from master
-  Wire.onReceive(receiveEvent);
+void setup() {  
+  // Initialize Serial Monitor for debugging
+  Serial.begin(115200);
+  while(!Serial);
 
   // Initialize a SoftwareSerial
   SoftwareSerial* serial = new SoftwareSerial(SIM800_RX_PIN, SIM800_TX_PIN);
@@ -62,113 +53,15 @@ void setup() {
   sim800l = new SIM800L((Stream *)serial, SIM800_RST_PIN, 200, 512);
 
   // Equivalent line with the debug enabled on the Serial
-  //sim800l = new SIM800L((Stream *)serial, SIM800_RST_PIN, 200, 512, (Stream *)&Serial);
+  // sim800l = new SIM800L((Stream *)serial, SIM800_RST_PIN, 200, 512, (Stream *)&Serial);
 
   // Setup module for GPRS communication
   setupModule();
-  
-  // Setup Serial Monitor 
-  Serial.begin(9600);
-  Serial.println("I2C Slave Demonstration");
 }
-
-void requestEvent() {
-
-  //check if there is file in SD card
-  if(pos > 0){
-    sendAnswer("busyy", 5);
-  }else{
-    sendAnswer("idlee", 5);
-  }
-  Serial.println("Request event");
-}
-
-void sendAnswer(String answer, int ANSWERSIZE){
-  byte response[ANSWERSIZE];
-  
-  // Format answer as array
-  for (byte i=0;i<ANSWERSIZE;i++) {
-    response[i] = (byte)answer.charAt(i);
-  }
-  
-  // Send response back to Master
-  Wire.write(response,sizeof(response));
-}
-
-void startSending(){
-  Serial.println("sending...");
-  //delay(30000);
-  sendDataToInternet0();
-}
-
-void resetBuffer() {
-  Serial.println("reseting buffer");
-  //memset(buffer, 0, sizeof(buffer));
-  pos = 0;
-}
-
+ 
 void loop() {
-
-  
-  if(pos > 0){
-    if(buffer[pos-1] == endOfFileChar){
-      startSending();
-    }
-  }
-  delay(10000);
-}
-
-
-
-void receiveEvent() {
-  while (0 < Wire.available()) { // loop through all but the last
-    char c = Wire.read(); // receive byte as a character
-    buffer[pos++] = c;
-  }
-  Serial.print("pos = ");
-  Serial.println(pos);
-}
-
-char* concatinate(char s1[], char s2[]){
-  int length, j;
-
-  // store length of s1 in the length variable
-  length = 0;
-  while (s1[length] != '=') {
-    ++length;
-  }
-  ++length;
-  
-  // concatenate s2 to s1
-  for (j = 0; s2[j] != 'E'; ++j, ++length) {
-    s1[length] = s2[j];
-  }
-
-  // terminating the s1 string
-  s1[length] = 'E';
-  s1[++length] = '\0';
-
-  return s1;
-}
-
-void sendDataToInternet0(){
-
-  char* U;
-
-  //U = concatinate("http://www.nrwlpms.com/sim900/save_data4.php?data=", buffer);
-
-  Serial.print("buffer is in send 0 : ");
-  Serial.print(buffer);
-  
-  sendDataToInternet(concatinate("http://www.nrwlpms.com/sim900/save_data4.php?data=", buffer));
-}
-
-int sendDataToInternet(char* URL){
-  
-  Serial.println(URL);
   // Establish GPRS connectivity (5 trials)
   bool connected = false;
-  
   for(uint8_t i = 0; i < 5 && !connected; i++) {
     delay(1000);
     connected = sim800l->connectGPRS();
@@ -190,23 +83,13 @@ int sendDataToInternet(char* URL){
 
   // Do HTTP GET communication with 10s for the timeout (read)
   uint16_t rc = sim800l->doGet(URL, 10000);
-   if(true){//rc == 200) {
-    resetBuffer();
+   if(rc == 200) {
     // Success, output the data received on the serial
     Serial.print(F("HTTP GET successful ("));
     Serial.print(sim800l->getDataSizeReceived());
     Serial.println(F(" bytes)"));
     Serial.print(F("Received : "));
-    //Serial.print(sim800l->getDataReceived());
-    String s = sim800l->getDataReceived();
-    Serial.print(s);
-    if(true){//s == "^"){
-      //deleteFile();
-      
-      Serial.print("file deleted");
-    }else{
-      Serial.print("error");
-    }
+    Serial.println(sim800l->getDataReceived());
   } else {
     // Failed...
     Serial.print(F("HTTP GET error "));
@@ -235,6 +118,9 @@ int sendDataToInternet(char* URL){
   } else {
     Serial.println(F("Failed to switch module to low power mode"));
   }
+
+  // End of program... wait...
+  while(1);
 }
 
 void setupModule() {
