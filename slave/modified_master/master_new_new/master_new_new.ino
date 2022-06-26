@@ -546,17 +546,7 @@ void loop() {
         if(readFromSdCard()){
           sendDataToSlave();
         }
-      }
-     
-     //reset default saver
-     previousMillisSd = millis();
-     //subtract one from no-rain counter
-     if(noRainCounter > 0){
-      noRainCounter--;
-     }
-     //add one to the number of files
-     //noOfFile++;
-     
+     }    
      Serial.println("on");
      Serial.print("number of button pushes: ");
      Serial.println(buttonPushCounter);
@@ -581,17 +571,6 @@ void loop() {
     }
     previousMillisSd = millis();
   }
-  
-//  Serial.println(DATA);
-//  int dataSize = strlen(DATA);
-//  
-//  resetBuffer();
-//  
-//  for(int i = 0; i < dataSize; i++){
-//    buffer[pos++] = DATA[i];
-//  }
-
-  //8888888888888888888888888888888
 
   //dims light of lcd after intervalLCD seconds
   if(millis() - sendingGap > sendingInterval) {
@@ -605,16 +584,6 @@ void loop() {
     //send every 5 minutes after once start sending
     sendingGap = millis();
   }
-//  
-//  
-//
-//  if(noOfFile == 1){
-//    startSending = 0;
-//    sendingGap = millis();
-//    //reset sendinginterval to every 15 minutes
-//    sendingInterval = 900000; 
-//  }
-  //78888888888888888888888888888
 
   snprintf(timeBuf, sizeof(timeBuf), "%04d-%02d-%02d_%02d:%02d:%02d",
            dt.year, dt.month, dt.day,
@@ -627,31 +596,9 @@ void loop() {
   lcd.print(buttonPushCounter);
   lcd.setCursor(9,3);
   lcd.print(sNoOfFile);
-  
-  //delay(500);
-  
-  //receiveDataFromSlave();
-  
-  //readFromSdCard();
-  //delay(500);
-  //writeToSdCard();
-  //delay(500);
-  //readFromSdCard();
-  //writeDataToSlave(START_SENDING);
-  //readFromSdCard();
-  //receiveDataFromSlave();
-  //Serial.println("continue work");
-  //while(1);
-  //writeDataToSlave();
-    
-  //receiveDataFromSlave();
 }
 
 int writeToSdCard(char amount){
-//  if(noOfFile == 0){
-//      //if nothing is written in sd card noOfFile is 1
-//      noOfFile = 1;
-//  }
   
   itoa(++noOfFile,sNoOfFile,10);
   strcat(sNoOfFile, ".TXT");
@@ -667,7 +614,6 @@ int writeToSdCard(char amount){
   }
   lcd.setCursor(9,3);
   lcd.print("          ");
-  //noOfFile++;
 }
 
 void sendDataToSlave(){
@@ -686,15 +632,6 @@ void sendDataToSlave(){
     delay(500);
   }
 }
-
-//int writeDataToSlave(byte order){
-//  Serial.println("Write data to slave");
-//  
-//  // Write a charatre to the Slave
-//  Wire.beginTransmission(SLAVE_ADDR);
-//  Wire.write("55,217,2022-06-02_09:11:23|0,2022-06-02_09:11:17|0,2022-06-02_09:11:12|0,2022-06-02_09:04:25|0,2022-06-02_06:48:22|0,2022-06-02_06:48:16|0,2022-06-02_06:48:11|0,2022-06-02_06:48:05|0,2022-06-02_06:42:57|0,2022-06-02_06:42:51|0");
-//  Wire.endTransmission();
-//}
 
 bool isSlaveIdle(){
   bool idle = true;
@@ -715,15 +652,9 @@ bool isSlaveIdle(){
   // Print to Serial Monitor
   Serial.println(response);
   if(response == BUSYY){
-    //deleteFiles();
     idle = false;
   }
-
   return idle;
-}
-
-void deleteFiles(){
-  Serial.println("file deletion...");
 }
 
 bool readFromSdCard(){
@@ -763,11 +694,6 @@ bool readFromSdCard(){
     }
   
     int range = 1;
-    
-//    if(noOfFile > 1)
-//      range = 1;
-//    else
-//      range = noOfFile;
       
     int limit = noOfFile - range;
     
@@ -786,7 +712,6 @@ bool readFromSdCard(){
         buffer[pos++] = endOfFileChar;
         Serial.write("--------------->");
         Serial.write(buffer);
-        //deleteFromSdCardByInterval(range);
         deleteSingleFile();
         return readCorrect;
       } else {
@@ -805,20 +730,4 @@ int deleteSingleFile(){
     Serial.println(sNoOfFile);
     SD.remove(sNoOfFile);
     noOfFile--;
-}
-
-int deleteFromSdCardByInterval(int range){
-  Serial.print("upToNoOfFile = ");
-  Serial.print(upToNoOfFile);
-  for(int tempNoOfFile = upToNoOfFile+1; tempNoOfFile <= noOfFile; tempNoOfFile++){
-    
-    itoa(tempNoOfFile,sNoOfFile,10);
-    strcat(sNoOfFile, ".TXT");
-    Serial.print("deleting");
-    Serial.println(sNoOfFile);
-    SD.remove(sNoOfFile);
-  }
-  noOfFile -= range;
-  Serial.print("noOfFile = ");
-  Serial.println(noOfFile);
 }
