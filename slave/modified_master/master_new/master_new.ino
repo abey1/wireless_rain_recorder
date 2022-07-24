@@ -447,6 +447,7 @@ int getLastNoOfFile(){
     nextFile = SD.open(sTempNoOfFile);
     if(nextFile){
       a = true;
+      noOfFile = tempNoOfFile;
       Serial.print("found");
       Serial.println(sTempNoOfFile);
       nextFile.close();
@@ -455,9 +456,7 @@ int getLastNoOfFile(){
     }else{
       a = false;
     }
-    
   }while(a);
-  noOfFile = tempNoOfFile;
 }
 
 int printLCDessentials(){
@@ -790,7 +789,8 @@ bool readFromSdCard(){
         deleteSingleFile();
         return readCorrect;
       } else {
-        Serial.println("error opening file from read");
+        Serial.println("error opening file for read");
+        //deleteSingleFile();
         readCorrect = false;
         return readCorrect;
       }
